@@ -19,7 +19,7 @@ site = "CAP_002"
 
 years_active = ["2025", "2026"]
 
-email = "crpetrosian@ucdavis.edu"
+email = st.experimental_user.email
 
 st.title("CSGrowers - Capay_002")
 
