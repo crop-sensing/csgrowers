@@ -2,7 +2,6 @@ folium
 streamlit_folium
 streamlit
 pandas
-numpy
 os
 glob
 geopandas
