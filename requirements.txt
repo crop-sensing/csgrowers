@@ -1,6 +1,6 @@
 folium
 streamlit_folium
-streamlit
+streamlit==1.49.1
 pandas
 plotly
 supabase
