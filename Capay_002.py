@@ -2,7 +2,6 @@ import folium as fl
 from streamlit_folium import st_folium
 import streamlit as st
 import pandas as pd
-from IPython.display import display
 import plotly
 import datetime
 import plotly.graph_objects as go
