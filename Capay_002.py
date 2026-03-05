@@ -19,7 +19,7 @@ site = "CAP_002"
 
 years_active = ["2025", "2026"]
 
-email = st.user.email
+email = st.write(st.user)
 
 st.title("CSGrowers - Capay_002")
 
