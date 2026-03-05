@@ -1,0 +1,4 @@
+mapbox_info.json
+*.json
+.streamlit/secrets.toml
+supabase_updater.py
