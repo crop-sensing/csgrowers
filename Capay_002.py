@@ -72,22 +72,22 @@ def data_set_up():
           res = client.table("irrigation").select("data").eq("dataset_name", "saved_irr").eq("site", site).eq("username", email).eq("irr_year", int(year)).execute()
           user_irr = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
           user_irr["Start Date"] = pd.to_datetime(user_irr["Start Date"], unit = "ms")
-          user_irr["End Date"] = pd.to_datetime(user_irr["End Date"], unit = "ms")
+          user_irr["End Date"] = pd.to_datetime(user_irr["End Date"])
           irr_dict[f"user_irr_{year}"] = user_irr
     
           ## Retrieve Template
           res = client.table("irrigation").select("data").eq("dataset_name", "template").eq("site", "ALL").eq("username", "ALL").eq("irr_year", int(year)).execute()
           template_irr = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
-          template_irr["Start Date"] = pd.to_datetime(template_irr["Start Date"], unit = "ms")
-          template_irr["End Date"] = pd.to_datetime(template_irr["End Date"], unit = "ms")
+          template_irr["Start Date"] = pd.to_datetime(template_irr["Start Date"])
+          template_irr["End Date"] = pd.to_datetime(template_irr["End Date"])
           irr_dict[f"template_{year}"] = template_irr
 
       except IndexError:
           ## Retrieve Template
           res = client.table("irrigation").select("data").eq("dataset_name", "template").eq("site", "ALL").eq("username", "ALL").eq("irr_year", int(year)).execute()
           template_irr = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
-          template_irr["Start Date"] = pd.to_datetime(template_irr["Start Date"], unit = "ms")
-          template_irr["End Date"] = pd.to_datetime(template_irr["End Date"], unit = "ms")
+          template_irr["Start Date"] = pd.to_datetime(template_irr["Start Date"])
+          template_irr["End Date"] = pd.to_datetime(template_irr["End Date"])
           irr_dict[f"user_irr_{year}"] = template_irr
           irr_dict[f"template_{year}"] = template_irr
 
