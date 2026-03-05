@@ -19,9 +19,17 @@ site = "CAP_002"
 
 years_active = ["2025", "2026"]
 
-email = st.experimental_user.email
+if "email" not in st.session_state:
+    st.session_state.email = None
 
+if not st.session_state.email:
+    email = st.text_input("Please enter your email to continue")
+    if email:
+        st.session_state.email = email
+        st.rerun()
+    st.stop()  # blocks the rest of the app from loading
 
+email = st.session_state.email
 st.title("CSGrowers - Capay_002")
 
 ## Import supabase credentials
