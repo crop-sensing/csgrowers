@@ -2,17 +2,12 @@ import folium as fl
 from streamlit_folium import st_folium
 import streamlit as st
 import pandas as pd
-import numpy as np
-import os
-import glob
-import geopandas as gpd
 from IPython.display import display
 import plotly
 import datetime
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import warnings
-import io
 import json
 from supabase import create_client
 from io import StringIO

@@ -2,9 +2,6 @@ folium
 streamlit_folium
 streamlit
 pandas
-os
-glob
-geopandas
 IPython.display
 plotly
 datetime
