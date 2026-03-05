@@ -19,7 +19,9 @@ site = "CAP_002"
 
 years_active = ["2025", "2026"]
 
-email = st.write(st.user.is_logged_in)
+email = "crpetrosian@ucdavis.edu"
+st.write(dir(st.user))
+
 
 st.title("CSGrowers - Capay_002")
 
