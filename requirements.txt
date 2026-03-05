@@ -3,8 +3,3 @@ streamlit_folium
 streamlit
 pandas
 plotly
-datetime
-warnings
-io
-json
-supabase
