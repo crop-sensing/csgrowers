@@ -71,7 +71,7 @@ def data_set_up():
           ## Retrieve Saved Irrigation
           res = client.table("irrigation").select("data").eq("dataset_name", "saved_irr").eq("site", site).eq("username", email).eq("irr_year", int(year)).execute()
           user_irr = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
-          user_irr["Start Date"] = pd.to_datetime(user_irr["Start Date"], unit = "ms")
+          user_irr["Start Date"] = pd.to_datetime(user_irr["Start Date"])
           user_irr["End Date"] = pd.to_datetime(user_irr["End Date"])
           irr_dict[f"user_irr_{year}"] = user_irr
     
