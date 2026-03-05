@@ -19,9 +19,7 @@ site = "CAP_002"
 
 years_active = ["2025", "2026"]
 
-email = "crpetrosian@ucdavis.edu"
-st.write(st.user.to_dict())
-st.write(st.user.keys())
+email = st.experimental_user.email
 
 
 st.title("CSGrowers - Capay_002")
