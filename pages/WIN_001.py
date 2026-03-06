@@ -45,7 +45,7 @@ client = create_client(
 )
 
 ## Does most API pulls in a single function, and caches it
-@st.cache_resource
+@st.cache_data
 def data_set_up():
     ## ET Import
     res = client.table("static_dataframes").select("data").eq("dataset_name", "et_both").eq("site", site).execute()
