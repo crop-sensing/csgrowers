@@ -15,7 +15,7 @@ from io import StringIO
 st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 
-site = "CAP_002"
+site = "WIN_001"
 
 years_active = ["2025", "2026"]
 
@@ -26,7 +26,7 @@ if not st.user.is_logged_in:
     st.stop()
 
 email = st.user.email
-st.title("CSGrowers - Capay_002")
+st.title("CSGrowers - Winters")
 
 ## Import supabase credentials
 client = create_client(
