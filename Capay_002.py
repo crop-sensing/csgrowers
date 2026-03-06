@@ -29,7 +29,7 @@ if not st.session_state.email:
         st.rerun()
     st.stop()  # blocks the rest of the app from loading
 
-email = st.session_state.email
+email = str(st.session_state.email)
 st.title("CSGrowers - Capay_002")
 
 ## Import supabase credentials
@@ -87,8 +87,8 @@ def data_set_up():
           ## Retrieve Template
           res = client.table("irrigation").select("data").eq("dataset_name", "template").eq("site", "ALL").eq("username", "ALL").eq("irr_year", int(year)).execute()
           template_irr = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
-          template_irr["Start Date"] = pd.to_datetime(template_irr["Start Date"])
-          template_irr["End Date"] = pd.to_datetime(template_irr["End Date"])
+          template_irr["Start Date"] = pd.to_datetime(template_irr["Start Date"], unit = "ms")
+          template_irr["End Date"] = pd.to_datetime(template_irr["End Date"], unit = "ms")
           irr_dict[f"template_{year}"] = template_irr
 
       except IndexError:
