@@ -13,7 +13,6 @@ from io import StringIO
 
 ## Must be first line
 st.set_page_config(layout = "wide")
-st.set_page_config(initial_sidebar_state="collapsed")
 warnings.filterwarnings("ignore")
 
 site = "CAP_002"

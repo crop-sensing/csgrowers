@@ -8,3 +8,6 @@ font = "sans serif"
 
 [ui]
 hideSidebarNav = true
+
+[client]
+showSidebarNavigation = false
