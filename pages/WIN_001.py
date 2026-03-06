@@ -16,6 +16,7 @@ st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 
 site = "WIN_001"
+current_page = "WIN_001"
 
 years_active = ["2025", "2026"]
 
@@ -27,6 +28,15 @@ if not st.user.is_logged_in:
 
 email = st.user.email
 st.title("CSGrowers - Winters")
+
+if "current_page" not in st.session_state:
+        st.session_state.current_page = current_page
+    
+if st.session_state.current_page != current_page:
+  # Page has changed, clear cache
+  st.cache_data.clear()
+  st.cache_resource.clear()
+  st.session_state.current_page = current_page
 
 ## Import supabase credentials
 client = create_client(
