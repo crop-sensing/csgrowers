@@ -32,7 +32,7 @@ st.title("CSGrowers - Capay_002")
 if "current_page" not in st.session_state:
         st.session_state.current_page = current_page
     
-if st.session_state.current_page != current_page:
+if st.session_state.get("current_page") != current_page:
   # Page has changed, clear cache
   st.cache_data.clear()
   st.cache_resource.clear()
