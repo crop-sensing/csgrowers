@@ -340,6 +340,13 @@ with col5.container(border = True, height = 290):
       "Along with these three main parts, we also allow you to select the date range of data you would like to view. " \
       "All together, these can give you a versatile experience to view and manipulate your data.")
       st.subheader("Data Summary / Target Setting")
+      st.write("At the top of the page you will see five columns of containers: a map, ETo data/crop coefficient customizer, ETa/FrET, Soil Mostiure Depletion/Target setting, and the box that contains general information. "\
+               "The map displays a marker of the where the tower is at the site you are currently viewing. The ETo box shows summary data from the last seven days of ETo data from CIMIS (see credits for more information), " \
+               "an input for a custom crop coefficient if you choose (or you can use our standard value), and there is an updated ETo value based on this coefficient. "\
+               "This coefficient will also update the ETo values you see on the rest of the app. If you choose to use a custom crop coefficient, you can save it to the cloud and it will be loaded automatically next time you sign into the app. " \
+               "The ETa/FrET boxes work indentically to the ETo box, but they display ETa and FrET from OpenET (for more information see glossary). "\
+               "The Soil Moisture Depletion box functions similarly to the ETo box, where there is the soil depletion for the last week is displayed. "\
+               "You can set, save, and load a custom soil mositure target with the buttons above the input box.")
   @st.dialog("Credits")
   def show_credits():
       st.write("Built by: **Audrey Petrosian**")
@@ -350,7 +357,14 @@ with col5.container(border = True, height = 290):
       st.write("Tower Data: **Sebastian Castro-Bustamante** and **Karem Meza Capcha**")
   @st.dialog("Glossary")
   def show_glossary():
-      st.write("Place Holder")
+      st.write("**ET**: Evapotranspiration")
+      st.write("**ETa**: ensemble ET, gathered through satelitte via OpenET")
+      st.write("**ETo**: reference ET, via CIMIS")
+      st.write("**FrET**: fractional ET, a ratio of ETo/ETa, via OpenET")
+      st.write("**SWC**: Soil Water Content, via SAWS Towers")
+      st.write("**VPD**: Vapor Pressure Deficit, via SAWS Towers")
+      st.write("**WP**: Water Potential, gatered via SAWS Towers")
+
   ## Shows tutorial/credits on click
   st.write("#### CSGrowers Information:")
   if st.button("Tutorial", use_container_width=True):
