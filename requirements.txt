@@ -1,15 +1,7 @@
-folium as fl
+folium
 streamlit_folium
 streamlit
 pandas
-numpy
-os
-glob
-geopandas
-IPython.display
 plotly
-datetime
-warnings
-io
-json
 supabase
+Authlib
