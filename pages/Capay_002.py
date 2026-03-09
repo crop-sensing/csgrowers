@@ -16,9 +16,12 @@ st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 
 site = "CAP_002"
-current_page = "Capay_002"
+curr_page = "Capay_002"
 
 years_active = ["2025", "2026"]
+
+if "current_page" not in st.session_state:
+        st.session_state.current_page = curr_page
 
 ## Uses Google OAuth to verify user email, details in hidden toml file
 if not st.user.is_logged_in:
@@ -29,14 +32,11 @@ if not st.user.is_logged_in:
 email = st.user.email
 st.title("CSGrowers - Capay_002")
 
-if "current_page" not in st.session_state:
-        st.session_state.current_page = current_page
-    
-if st.session_state.get("current_page") != current_page:
+if st.session_state.get("current_page") != curr_page:
   # Page has changed, clear cache
   st.cache_data.clear()
   st.cache_resource.clear()
-  st.session_state.current_page = current_page
+  st.session_state.current_page = curr_page
 
 ## Import supabase credentials
 client = create_client(
