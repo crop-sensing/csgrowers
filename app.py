@@ -6,14 +6,14 @@ def get_authorized_pages():
     user = st.user
 
     if not user.is_logged_in:
-        return [st.Page("login.py", title="Login")]
+        return [st.Page("pages/login.py", title="Login")]
 
     email = user.email
 
     pages = []
 
     # Everyone authenticated gets these
-    pages.append(st.Page("homepage.py", title="Home", icon="🏠"))
+    pages.append(st.Page("pages/homepage.py", title="Home", icon="🏠"))
 
     # Company domain gets analytics
     if email.endswith("@ucdavis.edu"):
