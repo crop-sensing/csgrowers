@@ -25,6 +25,7 @@ def get_authorized_pages():
 
     return pages
 
-
-pg = st.navigation(get_authorized_pages())
+auth = get_authorized_pages()
+st.write(auth)
+pg = st.navigation(auth)
 pg.run()
