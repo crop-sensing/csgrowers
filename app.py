@@ -4,7 +4,7 @@ pg = st.navigation([st.Page("homepage.py"), st.Page("Capay_002.py")], position =
 
 # Define pages and who can access them
 def get_authorized_pages():
-    user = st.experimental_user
+    user = st.user
 
     if not user.is_logged_in:
         return [st.Page("pages/login.py", title="Login")]
