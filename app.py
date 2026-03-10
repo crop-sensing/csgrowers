@@ -1,6 +1,5 @@
 import streamlit as st
-
-pg = st.navigation([st.Page("homepage.py"), st.Page("Capay_002.py")], position = "hidden") ## , position = "hidden" to hide nav bar
+ ## , position = "hidden" to hide nav bar
 
 # Define pages and who can access them
 def get_authorized_pages():
