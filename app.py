@@ -13,7 +13,7 @@ def get_authorized_pages():
     pages = []
 
     # Everyone authenticated gets these
-    pages.append(st.Page("pages/home.py", title="Home", icon="🏠"))
+    pages.append(st.Page("pages/homepage.py", title="Home", icon="🏠"))
 
     # Company domain gets analytics
     if email.endswith("@ucdavis.edu"):
