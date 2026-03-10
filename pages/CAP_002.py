@@ -12,6 +12,7 @@ from supabase import create_client
 from io import StringIO
 
 ## Must be first line
+st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 st.title("CSGrowers - Capay_002")
 

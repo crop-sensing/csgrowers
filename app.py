@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(initial_sidebar_state="expanded")
 
 def get_authorized_pages():
     user = st.user
