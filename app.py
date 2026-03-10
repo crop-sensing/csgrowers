@@ -1,7 +1,5 @@
 import streamlit as st
- ## , position = "hidden" to hide nav bar
 
-# Define pages and who can access them
 def get_authorized_pages():
     user = st.user
 
@@ -9,23 +7,17 @@ def get_authorized_pages():
         return [st.Page("pages/login.py", title="Login")]
 
     email = user.email
-
     pages = []
 
-    # Everyone authenticated gets these
     pages.append(st.Page("pages/homepage.py", title="Home", icon="🏠"))
 
-    # Company domain gets analytics
     if email.endswith("@ucdavis.edu"):
         pages.append(st.Page("pages/CAP_002.py", title="CAP_002", icon="📊"))
 
-    # Only specific admins
     if email in ["crpetrosian@ucdavis.edu"]:
         pages.append(st.Page("pages/WIN_001.py", title="WIN_001", icon="⚙️"))
 
     return pages
 
-auth = get_authorized_pages()
-st.write(auth)
-pg = st.navigation(auth, position="sidebar", expanded=True)
+pg = st.navigation(get_authorized_pages(), position="sidebar", expanded=True)
 pg.run()
