@@ -14,29 +14,34 @@ from io import StringIO
 ## Must be first line
 st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
+st.title("CSGrowers - Capay_002")
+
+origin = "local" ## streamlit or local
 
 site = "CAP_002"
-curr_page = "Capay_002"
+curr_page = "CAP_002"
 
 years_active = ["2025", "2026"]
 
-if "current_page" not in st.session_state:
-        st.session_state.current_page = curr_page
+if origin == "streamlit":
+  if "current_page" not in st.session_state:
+          st.session_state.current_page = curr_page
+  
+  ## Uses Google OAuth to verify user email, details in hidden toml file
+  if not st.user.is_logged_in:
+      st.session_state.redirect_page = curr_page
+      st.button("Log in with Google", on_click=st.login)
+      st.stop()
+  
+  email = st.user.email
 
-## Uses Google OAuth to verify user email, details in hidden toml file
-if not st.user.is_logged_in:
-    st.session_state.redirect_page = __file__.split("/")[-1].replace(".py", "")
-    st.button("Log in with Google", on_click=st.login)
-    st.stop()
-
-email = st.user.email
-st.title("CSGrowers - Capay_002")
-
-if st.session_state.get("current_page") != curr_page:
-  # Page has changed, clear cache
-  st.cache_data.clear()
-  st.cache_resource.clear()
-  st.session_state.current_page = curr_page
+  if st.session_state.get("current_page") != curr_page:
+    # Page has changed, clear cache
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.session_state.current_page = curr_page
+else:
+  email = "crpetrosian@ucdavis.edu"
 
 ## Import supabase credentials
 client = create_client(

@@ -16,27 +16,31 @@ st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 
 site = "WIN_001"
-current_page = "WIN_001"
-
+curr_page = "WIN_001"
+origin = "streamlit"
 years_active = ["2025", "2026"]
 
-## Uses Google OAuth to verify user email, details in hidden toml file
-if not st.user.is_logged_in:
-    st.session_state.redirect_page = __file__.split("/")[-1].replace(".py", "")
-    st.button("Log in with Google", on_click=st.login)
-    st.stop()
-
-email = st.user.email
 st.title("CSGrowers - Winters")
 
-if "current_page" not in st.session_state:
-        st.session_state.current_page = current_page
-    
-if st.session_state.get("current_page") != current_page:
-  # Page has changed, clear cache
-  st.cache_data.clear()
-  st.cache_resource.clear()
-  st.session_state.current_page = current_page
+if origin == "streamlit":
+  if "current_page" not in st.session_state:
+          st.session_state.current_page = curr_page
+  
+  ## Uses Google OAuth to verify user email, details in hidden toml file
+  if not st.user.is_logged_in:
+      st.session_state.redirect_page = __file__.split("/")[-1].replace(".py", "")
+      st.button("Log in with Google", on_click=st.login)
+      st.stop()
+  
+  email = st.user.email
+
+  if st.session_state.get("current_page") != curr_page:
+    # Page has changed, clear cache
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.session_state.current_page = curr_page
+else:
+  email = "crpetrosian@ucdavis.edu"
 
 ## Import supabase credentials
 client = create_client(
