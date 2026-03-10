@@ -17,11 +17,11 @@ def get_authorized_pages():
 
     # Company domain gets analytics
     if email.endswith("@ucdavis.edu"):
-        pages.append(st.Page("CAP_002.py", title="CAP_002", icon="📊"))
+        pages.append(st.Page("pages/CAP_002.py", title="CAP_002", icon="📊"))
 
     # Only specific admins
     if email in ["crpetrosian@ucdavis.edu"]:
-        pages.append(st.Page("WIN_001.py", title="WIN_001", icon="⚙️"))
+        pages.append(st.Page("pages/WIN_001.py", title="WIN_001", icon="⚙️"))
 
     return pages
 
