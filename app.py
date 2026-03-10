@@ -27,5 +27,5 @@ def get_authorized_pages():
 
 auth = get_authorized_pages()
 st.write(auth)
-pg = st.navigation(auth)
+pg = st.navigation(auth, position="sidebar", expanded=True)
 pg.run()
