@@ -18,8 +18,8 @@ st.title("CSGrowers - Capay_002")
 
 origin = "streamlit" ## streamlit or local
 
-site = "CAP_002"
-curr_page = "CAP_002"
+site = "OAK_001"
+curr_page = "OAK_001"
 
 years_active = ["2025", "2026"]
 

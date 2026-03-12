@@ -14,12 +14,12 @@ from io import StringIO
 ## Must be first line
 st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
-st.title("CSGrowers - Capay_002")
+st.title("CSGrowers - Capay_001")
 
 origin = "streamlit" ## streamlit or local
 
-site = "CAP_002"
-curr_page = "CAP_002"
+site = "CAP_001"
+curr_page = "CAP_001"
 
 years_active = ["2025", "2026"]
 

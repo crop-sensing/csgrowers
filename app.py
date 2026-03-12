@@ -14,10 +14,10 @@ def get_authorized_pages():
     pages.append(st.Page("pages/homepage.py", title="Home", icon="🏠"))
 
     if email.endswith("@ucdavis.edu"):
-        pages.append(st.Page("pages/CAP_002.py", title="CAP_002", icon="📊"))
+        pages.append(st.Page("pages/CAP_001.py", title="CAP_001", icon="🌳"), st.Page("pages/CAP_002.py", title="CAP_002", icon="🌳"))
 
     if email in ["crpetrosian@ucdavis.edu"]:
-        pages.append(st.Page("pages/WIN_001.py", title="WIN_001", icon="⚙️"))
+        pages.append(st.Page("pages/OAK_001.py", title="OAK_001", icon="🍇"), st.Page("pages/WIN_001.py", title="WIN_001", icon="🌳"))
 
     return pages
 
