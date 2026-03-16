@@ -18,8 +18,10 @@ OpenET's has the following disclaimer about provisional data:
 >Realtime OpenET data is considered “provisional” for the last 120 days. This data can and will change and is not considered stable/static/final. The two main sources for this change are the gridMET data not being finalized until after 60 days, and new Landsat images needing to be run through the models and used to interpolate previous months. To account for all of this, we make monthly updates of the last 3 to 4 month for all models and the ensemble.
 We are currently, planning to refresh the last 3-4 months of our OpenET data monthly, similar to OpenET's approach. The issues with provisional data is more obvious when viewing FrET data.
 
-### SAWS Tower
+### SAWS Towers
+Our third source of data for our dashboard comes from our towers installed at the sites CSGrowers monitors. These towers were installed in the summer of 2025. They have sensors to measure weather, soil content, solar radiation, and water potential. CSGrowers gives you access to the most relevant data for growers. Towers collect data at either 30 or 60 minutes intervals and their daily values have been averaged for clarity. These towers are prone to data issues, but you can track your site's current issues in the "Known Issues" tab of the homepage.
 
+The towers were set-up and are monitored primarily by Sebastian Castro-Bustamante and Karem Meza Capcha. Special thanks to  our "field dog" technicians for all their work in and out of the field to help make projects like this possible.
 
 ### Credits
 Melton, F., Huntington, J., Grimm, R., Herring, J., Hall, M., Rollison, D., Erickson, T., Allen, R., Anderson, M., Fisher, J., Kilic, A., Senay, G., volk, J., Hain, C., Johnson, L., Ruhoff, A., Blankenau, P., Bromley, M., Carrara, W., Daudert, B., Doherty, C., Dunkerly, C., Friedrichs, M., Guzman, A., Halverson,   G., Hansen, J., Harding, J., Kang, Y., Ketchum, D., Minor, B., Morton, C., Revelle, P., Ortega-Salazar, S., Ott, T., Ozdogon, M., Schull, M., Wang, T., Yang, Y., Anderson, R., 2021. OpenET: Filling a Critical Data Gap in Water Management for the Western United States. Journal of the American Water Resources      Association, 2021 Nov 2. doi:10.1111/1752-1688.12956

@@ -14,7 +14,7 @@ from io import StringIO
 ## Must be first line
 st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
-st.title("CSGrowers - Capay_002")
+st.title("CSGrowers - Oakville")
 
 origin = "streamlit" ## streamlit or local
 

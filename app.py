@@ -1,5 +1,7 @@
 import streamlit as st
 
+origin = "local"
+
 st.set_page_config(initial_sidebar_state="expanded")
 
 def get_authorized_pages():
@@ -23,5 +25,9 @@ def get_authorized_pages():
 
     return pages
 
-pg = st.navigation(get_authorized_pages(), position="sidebar", expanded=True)
+
+if origin == "streamlit":
+  pg = st.navigation(get_authorized_pages(), position="sidebar", expanded=True)
+else:
+  pg = st.navigation([st.Page("pages/homepage.py"), st.Page("pages/CAP_002.py")])
 pg.run()
