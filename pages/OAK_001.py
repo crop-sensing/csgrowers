@@ -14,7 +14,7 @@ from io import StringIO
 ## Must be first line
 st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
-st.title("CSGrowers - Capay_002")
+st.title("CSGrowers - Oakville")
 
 origin = "streamlit" ## streamlit or local
 
@@ -219,11 +219,11 @@ col1, col2, col3, col4, col5 = st.columns(5)
 token = st.secrets["mapbox"]["token"]
 tileurl = 'https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_token=' + str(token)
 
-## Creates small map and marker of current site (CAP_002 in this case)
+## Creates small map and marker of current site (OAK_001 in this case)
 with col1.container(border = True, height = 290):
   m = fl.Map()
   m = fl.Map(location=[float(st.secrets[site]["center_lat"]), float(st.secrets[site]["center_long"])], zoom_start = 13, tiles = tileurl, attr = "Mapbox", scrollWheelZoom = False, height = 290)
-  fl.Marker(location = [float(st.secrets[site]["true_lat"]), float(st.secrets[site]["true_long"])], popup = "CAP_002").add_to(m)
+  fl.Marker(location = [float(st.secrets[site]["true_lat"]), float(st.secrets[site]["true_long"])], popup = "OAK_001").add_to(m)
   st_folium(m, height = 230, returned_objects=[])
 
 ## Either saves crop coeff to supabase or returns empty WIP
@@ -267,7 +267,7 @@ with col2.container(border = True, height = 290):
     st.toast("Input must be a number.")
     cc = 1
   st.markdown(f"""
-              #### Adjusted ETo (Last 7 Days): **{eto_mean * cc:.3f}**""")
+              #### Adjusted ETo: **{eto_mean * cc:.3f}**""")
 
 ## Static text display summary ET info
 with col3.container(border = True, height = 137):
@@ -352,14 +352,6 @@ with col5.container(border = True, height = 290):
                "The ETa/FrET boxes work indentically to the ETo box, but they display ETa and FrET from OpenET (for more information see glossary). "\
                "The Soil Moisture Depletion box functions similarly to the ETo box, where there is the soil depletion for the last week is displayed. "\
                "You can set, save, and load a custom soil mositure target with the buttons above the input box.")
-  @st.dialog("Credits")
-  def show_credits():
-      st.write("Built by: **Audrey Petrosian**")
-      st.write("Support: **Nicolas Bambach**, **Kyle Knipper**, **Mina Swintek**")
-      st.subheader("Data:")
-      st.write("Reference ET (ETo): [CIMIS](https://cimis.water.ca.gov/)")
-      st.write("ETa/FrET: [OpenET](https://etdata.org/)")
-      st.write("Tower Data: **Sebastian Castro-Bustamante** and **Karem Meza Capcha**")
   @st.dialog("Glossary")
   def show_glossary():
       st.write("**ET**: Evapotranspiration")
@@ -374,22 +366,23 @@ with col5.container(border = True, height = 290):
   st.write("#### CSGrowers Information:")
   if st.button("Tutorial", use_container_width=True):
     show_tutorial()
-  if st.button("Credits", use_container_width=True):
-    show_credits()
   if st.button("Glossary", use_container_width=True):
     show_glossary()
   
+date1, date2 = st.columns(2)
+date_start = date1.date_input("Start Date", value = datetime.date(int(datetime.date.today().strftime("%Y")), 1, 1))
+date_end = date2.date_input("End Date", value = datetime.date.today())
 
 ## Allows user to select dates to later be used to filter data
-date_range = st.date_input("Enter Date Range", value = (datetime.date(2026, 1, 1), datetime.date(2026, 2, 28)),
-                           format = "YYYY-MM-DD", min_value=datetime.date(2025, 8, 1), max_value=datetime.date.today(),
-                           help = "Applies a date range filter to all data except irrigation. We recommend you use the built-in UI to select the dates.")
+# date_range = st.date_input("Enter Date Range", value = (datetime.date(2026, 1, 1), datetime.date(2026, 2, 28)),
+#                            format = "YYYY-MM-DD", min_value=datetime.date(2025, 8, 1), max_value=datetime.date.today(),
+#                            help = "Applies a date range filter to all data except irrigation. We recommend you use the built-in UI to select the dates.")
 
 ## Function that does the filtering
-def time_restrict(date_range = date_range,
+def time_restrict(date_start = date_start, date_end = date_end,
                   et_both = et_both, dl_soil_all = dl_soil_all, dl_flo = dl_flo, dl_gen = dl_gen):
-  start = pd.to_datetime(date_range[0])
-  end = pd.to_datetime(date_range[1])
+  start = pd.to_datetime(date_start)
+  end = pd.to_datetime(date_end)
   et_both = et_both[(et_both["date"] >= start) & (et_both["date"] <= end)]
   dl_soil_all = dl_soil_all[(dl_soil_all["TIMESTAMP"] >= start) & (dl_soil_all["TIMESTAMP"] <= end)]
   dl_flo = dl_flo[(dl_flo["TIMESTAMP"] >= start) & (dl_flo["TIMESTAMP"] <= end)]
@@ -404,7 +397,13 @@ irr_tab, et_tab, soil_tab, wp_tab, weather_tab = st.tabs(["Irrigation", "Evapotr
 irr_year = irr_tab.radio("Year:", years_active, horizontal = True)
 ## Irrigation data editor/button initilization
 user_file = None
-app_df = irr_tab.data_editor(irr_dict[f"user_irr_{irr_year}"])
+app_df = irr_tab.data_editor(irr_dict[f"user_irr_{irr_year}"],
+                             column_config = {
+                               "Start Date": st.column_config.DateColumn(),
+                               "End Date": st.column_config.DateColumn(),
+                               "Irrigation": st.column_config.NumberColumn(min_value = 0, max_value = 100)
+                             },
+                             hide_index = True)
 popup = irr_tab.popover("Upload Data")
 popup.download_button(label = "Download Template File (Selected Year)", data = irr_dict[f"template_{irr_year}"].to_csv().encode("utf-8"), file_name = f"csgrowers_irrigation_template_{irr_year}.csv")
 user_file = popup.file_uploader("Upload Data", type = "csv")
@@ -444,38 +443,44 @@ if down_popup.button("Save (this will overwrite your file in the cloud)"):
 ## Displays ET data
 et_both = et_both[["date", "eto", "eta", "etof"]]
 et_both["eto"] = et_both["eto"]*cc
-et_tab.dataframe(et_both)
+et_tab.dataframe(et_both.rename(columns = {"date": "Date", "eto": "ETo", "eta": "ETa", "etof": "FrET"}), hide_index = True,
+                 column_config={"Date": st.column_config.DateColumn()})
 
 ## Rearrange and show soil data
 soil_cols = list(dl_soil_all.columns)
 soil_cols = soil_cols[-1::] + soil_cols[0:-1]
 dl_soil_all = dl_soil_all[soil_cols]
-soil_tab.dataframe(dl_soil_all)
+soil_tab.dataframe(dl_soil_all.rename(columns = {"TIMESTAMP": "Date"}), hide_index = True,
+                 column_config={"Date": st.column_config.DateColumn()})
 
 ## Water Potential Data Frame that uses earlier functions to check data upon save.
-app_wp = wp_tab.data_editor(dl_flo, disabled = ["TIMESTAMP", "WP"])
+app_wp = wp_tab.data_editor(dl_flo.rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP"], hide_index = True,
+                 column_config={"Date": st.column_config.DateColumn()})
 if wp_tab.button("Save Pressure Bomb Data"):
   if pb_check(app_wp) == "Fail":
     wp_tab.error("Upload Failed Check Inputs")
   else:
-    pressure_bomb_upload(app_wp)
+    pressure_bomb_upload(app_wp.rename(columns = {"Date": "TIMESTAMP"}), hide_index = True,
+                 column_config={"Date": st.column_config.DateColumn()})
     wp_tab.success("Upload Successful!")
 
 ## Weather data is rearranged and displayed
 dl_gen = dl_gen[["TIMESTAMP", "VPD", "Air_Temperature (C)", "Air_Temperature (F)", "Relative_Humidity (%)"]]
-weather_tab.dataframe(dl_gen)
+weather_tab.dataframe(dl_gen.rename(columns = {"TIMESTAMP": "Date"}), hide_index = True,
+                 column_config={"Date": st.column_config.DateColumn()})
 
 ## Irrigation Visualization
 def irr_vis(irr = app_df):
   irr_plot = go.Figure()
 
-  irr_plot.add_trace(go.Bar(x = pd.to_datetime(irr["End Date"]), y = irr["Irrigation"], name = "IRR"))
+  irr_plot.add_trace(go.Bar(x = pd.to_datetime(irr["End Date"]), y = irr["Irrigation"], name = "Irrigation (in)", showlegend = True))
   irr_plot.update_layout(
-    title = "Irrigation",
-      margin = dict(t = 25, b = 25)
+    margin = dict(t = 0, b = 25, r = 150),
+    yaxis_title = "Irrigation Applied (in)"
   )
   return irr_plot
 
+st.subheader("Applied Irrigation")
 st.plotly_chart(irr_vis())
 
 ## ET Visualization
@@ -486,17 +491,18 @@ def et_vis(et = et_both):
   et_plot.add_trace(go.Scatter(x = et["date"], y = et["eta"], name = "ETa via OpenET"), secondary_y=False)
   et_plot.add_trace(go.Scatter(x = et["date"], y = et["etof"], name = "FrET via OpenET"), secondary_y=True)
   et_plot.update_layout(
-    title = "Evapotranspiration",
-    margin = dict(t = 25, b = 25),
+    margin = dict(t = 0, b = 25),
     hovermode = "x unified"
   )
   et_plot.update_yaxes(title_text = "ETa & ETo (mm)", secondary_y=False)
   et_plot.update_yaxes(title_text = "FrET (mm)", secondary_y=True)
   return et_plot
 
+st.subheader("Evapotranspiration")
 st.plotly_chart(et_vis())
 
 ## Soil Heat Map Visualization along with depth filtering
+st.subheader("Soil Moisture Content")
 heat_select = st.selectbox("Soil Moisture Depth:", ["All", "Near Surface", "Mid Surface", "Deep Surface"])
 def heat_map(dl_soil_all = dl_soil_all, filter = heat_select, depths = depths):
   if filter == "All":
@@ -515,7 +521,7 @@ def heat_map(dl_soil_all = dl_soil_all, filter = heat_select, depths = depths):
       y = depth_cols,
       colorscale = "RdYlBu",
       colorbar = dict(title = "Soil Water Content"),
-      hoverongaps = False,
+      hoverongaps = False
   ))
   ## Adds black vertical lines for each depth.
   for i, col in enumerate(depth_cols):
@@ -525,16 +531,16 @@ def heat_map(dl_soil_all = dl_soil_all, filter = heat_select, depths = depths):
           mode = "lines",
           line = dict(color = "grey", width = 1),
           showlegend = False,
-          hoverinfo = "skip",
+          hoverinfo = "skip"
       ))
 
   heatmap.update_layout(
-    title = "Soil Moisture Content",
-    margin = dict(t = 25, b = 0),
+    margin = dict(t = 0, b = 25),
     yaxis = dict(autorange = "reversed")
   )
 
   return heatmap
+
 
 st.plotly_chart(heat_map())
 
@@ -547,18 +553,18 @@ def water_potential(wp = dl_flo, dl_gen = dl_gen):
   wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["Pressure_Bomb"], mode = "markers", name = "User Pressure Bomb"))
 
   wp_plot.update_layout(
-    title = "Water Potential",
     yaxis_title = "Water Potential (Bar)",
     hovermode = "x unified",
-    margin = dict(t = 25)
+    margin = dict(t = 0)
   )
 
   return wp_plot
 
+st.subheader("Water Potential")
 st.plotly_chart(water_potential())
 
 ## Weather Plot
-def weather_plot(date_range = date_range, dl_gen = dl_gen):
+def weather_plot(dl_gen = dl_gen):
   weather = go.Figure()
 
   weather.add_trace(go.Scatter(x=dl_gen["TIMESTAMP"], y=dl_gen["Air_Temperature (F)"], mode="lines", name="Air Temperature (F)", line=dict(color="red")))
@@ -566,12 +572,12 @@ def weather_plot(date_range = date_range, dl_gen = dl_gen):
   weather.add_trace(go.Scatter(x=dl_gen["TIMESTAMP"], y=dl_gen["Relative_Humidity (%)"], mode="lines", name="Relative Humidity (%)"))
 
   weather.update_layout(
-    title = "Weather",
     yaxis_title = "Value",
     hovermode = "x unified",
-    margin = dict(t = 25, b = 25)
+    margin = dict(t = 0)
   )
   return weather
 
+st.subheader("Weather")
 st.plotly_chart(weather_plot())
 
