@@ -1,6 +1,6 @@
 import streamlit as st
 st.set_page_config(layout = "wide", initial_sidebar_state = "expanded")
-st.header(f"Hello! Welcome to CSGrowers!")
+st.header(f"Hello! Welcome to CSGrowers, {st.user.name}!")
 st.write("")
 if st.button("Log Out"):
     st.logout()
@@ -30,7 +30,7 @@ with data_issues.container(border = True):
 
 st.subheader("Resources:")
 st.write("""
-         - For a more details on how this app works, how our data is collected, and how we harness it check out this app's GitHub [here](https://github.com/crop-sensing/csgrowers).
+         - For more details on how this app works, how our data is collected, and how we harness it check out this app's GitHub [here](https://github.com/crop-sensing/csgrowers).
          
          - Currently a bug reporting system is a work in progress. If you have something you would like to report direct your message to Audrey (crpetrosian@ucdavis.edu) with the subject line 'CSGrowers Bug Report'. 
          
