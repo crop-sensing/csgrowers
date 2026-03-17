@@ -16,7 +16,7 @@ st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 st.title("CSGrowers - Capay_002")
 
-origin = "local" ## streamlit or local
+origin = "streamlit" ## streamlit or local
 
 site = "CAP_002"
 curr_page = "CAP_002"
@@ -352,14 +352,6 @@ with col5.container(border = True, height = 290):
                "The ETa/FrET boxes work indentically to the ETo box, but they display ETa and FrET from OpenET (for more information see glossary). "\
                "The Soil Moisture Depletion box functions similarly to the ETo box, where there is the soil depletion for the last week is displayed. "\
                "You can set, save, and load a custom soil mositure target with the buttons above the input box.")
-  @st.dialog("Credits")
-  def show_credits():
-      st.write("Built by: **Audrey Petrosian**")
-      st.write("Support: **Nicolas Bambach**, **Kyle Knipper**, **Mina Swintek**")
-      st.subheader("Data:")
-      st.write("Reference ET (ETo): [CIMIS](https://cimis.water.ca.gov/)")
-      st.write("ETa/FrET: [OpenET](https://etdata.org/)")
-      st.write("Tower Data: **Sebastian Castro-Bustamante** and **Karem Meza Capcha**")
   @st.dialog("Glossary")
   def show_glossary():
       st.write("**ET**: Evapotranspiration")
@@ -374,8 +366,6 @@ with col5.container(border = True, height = 290):
   st.write("#### CSGrowers Information:")
   if st.button("Tutorial", use_container_width=True):
     show_tutorial()
-  if st.button("Credits", use_container_width=True):
-    show_credits()
   if st.button("Glossary", use_container_width=True):
     show_glossary()
   
