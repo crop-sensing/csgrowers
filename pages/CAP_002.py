@@ -336,8 +336,8 @@ with col5.container(border = True, height = 290):
   @st.dialog("Tutorial", width = "large")
   def show_tutorial():
       st.subheader("Introduction")
-      st.write("The CSGrowers App is a pilot program developed to give growers a dashboard to view nearly live data and the ability to save irrigation data, pressure bomb data, and custimizations to data and data visualizatoins.")
-      st.write("The following tutorial will give you the basics on how to interface with this app. For more information on our methods of gathering, maniupulating, and storing data visit the [GitHub Repository](https://github.com/crop-sensing/csgrowers)" \
+      st.write("The CSGrowers App is a pilot program developed to give growers a dashboard to view nearly live data and the ability to save irrigation data, pressure bomb data, and customizations to data and data visualizatoins.")
+      st.write("The following tutorial will give you the basics on how to interface with this app. For more information on our methods of gathering, manipulating, and storing data visit the [GitHub Repository](https://github.com/crop-sensing/csgrowers)" \
       " for CSGrowers.")
       st.subheader("Overview")
       st.write("The CSGrowers dashboard consists of three main components: data summary/target setting, data tables, and data visualizations. " \
@@ -355,12 +355,12 @@ with col5.container(border = True, height = 290):
   @st.dialog("Glossary")
   def show_glossary():
       st.write("**ET**: Evapotranspiration")
-      st.write("**ETa**: ensemble ET, gathered through satelitte via OpenET")
-      st.write("**ETo**: reference ET, via CIMIS")
-      st.write("**FrET**: fractional ET, a ratio of ETo/ETa, via OpenET")
+      st.write("**ETa**: Ensemble ET, gathered through satelite via OpenET")
+      st.write("**ETo**: Reference ET, via CIMIS")
+      st.write("**FrET**: Fractional ET, a ratio of ETo/ETa, via OpenET")
       st.write("**SWC**: Soil Water Content, via SAWS Towers")
       st.write("**VPD**: Vapor Pressure Deficit, via SAWS Towers")
-      st.write("**WP**: Water Potential, gatered via SAWS Towers")
+      st.write("**WP**: Water Potential, gathered via SAWS Towers")
 
   ## Shows tutorial/credits on click
   st.write("#### CSGrowers Information:")
@@ -372,11 +372,6 @@ with col5.container(border = True, height = 290):
 date1, date2 = st.columns(2)
 date_start = date1.date_input("Start Date", value = datetime.date(int(datetime.date.today().strftime("%Y")), 1, 1))
 date_end = date2.date_input("End Date", value = datetime.date.today())
-
-## Allows user to select dates to later be used to filter data
-# date_range = st.date_input("Enter Date Range", value = (datetime.date(2026, 1, 1), datetime.date(2026, 2, 28)),
-#                            format = "YYYY-MM-DD", min_value=datetime.date(2025, 8, 1), max_value=datetime.date.today(),
-#                            help = "Applies a date range filter to all data except irrigation. We recommend you use the built-in UI to select the dates.")
 
 ## Function that does the filtering
 def time_restrict(date_start = date_start, date_end = date_end,
@@ -460,7 +455,7 @@ if wp_tab.button("Save Pressure Bomb Data"):
   if pb_check(app_wp) == "Fail":
     wp_tab.error("Upload Failed Check Inputs")
   else:
-    pressure_bomb_upload(app_wp.rename(columns = {"Date": "TIMESTAMP"}), hide_index = True,
+    pressure_bomb_upload(app_wp.rename(columns = {"Date": "TIMESTAMP"}), 
                  column_config={"Date": st.column_config.DateColumn()})
     wp_tab.success("Upload Successful!")
 

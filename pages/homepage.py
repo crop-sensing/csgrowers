@@ -26,15 +26,15 @@ with data_issues.container(border = True):
 with data_issues.container(border = True):
     st.write("CAP_001: Soil Sensors are down due to sliced wires. Since: 9/2025.")
 with data_issues.container(border = True):
-    st.write("CAP_001: Unstable tower connection. Since: 1/2025.")
+    st.write("CAP_001: Unstable tower connection. Since: 1/2026.")
 
 st.subheader("Resources:")
 st.write("""
-         - For more details on how this app works, how our data is collected, and how we harness it check out this app's GitHub [here](https://github.com/crop-sensing/csgrowers).
+         - For more information on our data and how this app works check out our GitHub [here](https://github.com/crop-sensing/csgrowers).
          
-         - Currently a bug reporting system is a work in progress. If you have something you would like to report direct your message to Audrey (crpetrosian@ucdavis.edu) with the subject line 'CSGrowers Bug Report'. 
+         - Currently a bug reporting system is a work in progress. If you have any issues, direct your message to Audrey (crpetrosian@ucdavis.edu) with the subject line 'CSGrowers Bug Report'. 
          
-         - If you have any questions not answered on this site or the GitHub please direct your questions to Audrey (same email).""")
+         - If you still have questions after reading the tutorial and readme you may email Audrey (same email).""")
 
 st.subheader("Credits:")
 st.write("""
@@ -42,7 +42,7 @@ st.write("""
 
 - Consultation on content and science provided by Nicolas Bambach and Kyle Knipper.
 
-- The towers were set-up and are monitored primarily by Sebastian Castro-Bustamante and Karem Meza Capcha. Special thanks to our "field dog" technicians (Peter Tolentino, Madeline Do, Tessa Guentensperger, and Carlos Perez) for all their work in and out of the field to help make projects like this possible.
+- The towers were set-up and are monitored primarily by Sebastian Castro-Bustamante and Karem Meza Capcha. Special thanks to our technicians (Peter Tolentino, Madeline Do, Tessa Guentensperger, and Carlos Perez) for all their work in and out of the field to help make projects like this possible.
 
 - Refernce ET provided by the California Irrigation Management Information System (CIMIS) a part of the California Department of Water Resoures, CIMIS can be accessed [here](https://cimis.water.ca.gov/Default.aspx).
 
