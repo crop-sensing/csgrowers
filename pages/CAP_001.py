@@ -310,7 +310,7 @@ def target_check(val):
 with col4.container(border = True, height = 290):
   st.markdown("""
            #### Soil Moisture Depletion:
-           #### Placeholder
+           #### 14.3%
            """)
   ## Similar to Crop Coeff logic, but allows user to manually load data instead of automatic
   soil_button1, soil_button2 = st.columns(2)
