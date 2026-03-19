@@ -455,8 +455,7 @@ if wp_tab.button("Save Pressure Bomb Data"):
   if pb_check(app_wp) == "Fail":
     wp_tab.error("Upload Failed Check Inputs")
   else:
-    pressure_bomb_upload(app_wp.rename(columns = {"Date": "TIMESTAMP"}), 
-                 column_config={"Date": st.column_config.DateColumn()})
+    pressure_bomb_upload(app_wp.rename(columns = {"Date": "TIMESTAMP"}))
     wp_tab.success("Upload Successful!")
 
 ## Weather data is rearranged and displayed
