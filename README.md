@@ -24,7 +24,7 @@ This app and repository was created and is managed by Audrey Petrosian.
 
 Consultation on content and science provided by Nicolas Bambach and Kyle Knipper.
 
-The towers were set-up and are monitored primarily by Sebastian Castro-Bustamante and Karem Meza Capcha. Special thanks to our "field dog" technicians (Peter Tolentino, Madeline Do, Tessa Guentensperger, and Carlos Perez) for all their work in and out of the field to help make projects like this possible.
+The towers were set-up and are monitored primarily by Sebastian Castro-Bustamante and Karem Meza Capcha. Special thanks to our technicians (Peter Tolentino, Madeline Do, Tessa Guentensperger, and Carlos Perez) for all their work in and out of the field to help make projects like this possible.
 
 Refernce ET provided by the California Irrigation Management Information System (CIMIS) a part of the California Department of Water Resoures, CIMIS can be accessed [here](https://cimis.water.ca.gov/Default.aspx).
 
