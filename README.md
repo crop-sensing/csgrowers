@@ -31,6 +31,4 @@ Refernce ET provided by the California Irrigation Management Information System 
 Satelitte ET (ETa) and Fractional ET (FrET) are provided by OpenET, based on it's paper:
 >Melton, F., et al., 2021. OpenET: Filling a Critical Data Gap in Water Management for the Western United States. Journal of the American Water Resources Association, 2021 Nov 2. doi:10.1111/1752-1688.12956
 
-The towers were set-up and are monitored primarily by Sebastian Castro-Bustamante and Karem Meza Capcha. Special thanks to our "field dog" technicians for all their work in and out of the field to help make projects like this possible.
-
 Special thanks to Mina Swintek for feedback on content, user interface, and bug testing.
