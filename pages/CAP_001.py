@@ -76,7 +76,7 @@ def data_set_up():
       pb = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
     pb["TIMESTAMP"] = pd.to_datetime(pb["TIMESTAMP"], unit = "ms")
 
-    dl_flo = dl_flo.merge(pb, on = "TIMESTAMP", how = "outer")
+    dl_flo = pd.merge(dl_flo, pb, on = "TIMESTAMP", how = "outer")
     
     ## DL Soil
     res = client.table("static_dataframes").select("data").eq("dataset_name", "dl_soil_all").eq("site", site).execute()
@@ -296,7 +296,7 @@ with col2.container(border = True, height = 290):
     st.toast("Input must be a number.")
     cc = 1
   st.markdown(f"""
-              #### Adjusted ETo: **{eto_mean * cc:.3f}**""")
+              #### ETc (Last 7 Days): **{eto_mean * cc:.3f}**""")
 
 ## Static text display summary ET info
 with col3.container(border = True, height = 137):
@@ -480,7 +480,7 @@ if down_popup.button("Save (this will overwrite your file in the cloud)"):
 ## Displays ET data
 et_both = et_both[["date", "eto", "eta", "etof"]]
 et_both["eto"] = et_both["eto"]*cc
-et_tab.dataframe(et_both.rename(columns = {"date": "Date", "eto": "ETo", "eta": "ETa", "etof": "FrET"}), hide_index = True,
+et_tab.dataframe(et_both.rename(columns = {"date": "Date", "eto": "ETc", "eta": "ETa", "etof": "FrET"}), hide_index = True,
                  column_config={"Date": st.column_config.DateColumn()})
 
 ## Rearrange and show soil data
@@ -491,7 +491,7 @@ soil_tab.dataframe(dl_soil_all.rename(columns = {"TIMESTAMP": "Date"}), hide_ind
                  column_config={"Date": st.column_config.DateColumn()})
 
 ## Water Potential Data Frame that uses earlier functions to check data upon save.
-app_wp = wp_tab.data_editor(dl_flo.rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP"], hide_index = True,
+app_wp = wp_tab.data_editor(dl_flo.rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP_mean", "WP_std", "WP_min", "WP_max"], hide_index = True,
                  column_config={"Date": st.column_config.DateColumn()})
 if wp_tab.button("Save Pressure Bomb Data"):
   if pb_check(app_wp) == "Fail":
@@ -523,7 +523,7 @@ st.plotly_chart(irr_vis())
 def et_vis(et = et_both):
   et_plot = make_subplots(specs=[[{"secondary_y": True}]])
   
-  et_plot.add_trace(go.Scatter(x = et["date"], y = et["eto"], name = "ETo via CIMIS"), secondary_y=False)
+  et_plot.add_trace(go.Scatter(x = et["date"], y = et["eto"], name = "ETc via CIMIS"), secondary_y=False)
   et_plot.add_trace(go.Scatter(x = et["date"], y = et["eta"], name = "ETa via OpenET"), secondary_y=False)
   et_plot.add_trace(go.Scatter(x = et["date"], y = et["etof"], name = "FrET via OpenET"), secondary_y=True)
   et_plot.update_layout(
@@ -557,7 +557,9 @@ def heat_map(dl_soil_all = dl_soil_all, filter = heat_select, depths = depths):
       y = depth_cols,
       colorscale = "RdYlBu",
       colorbar = dict(title = "Soil Water Content"),
-      hoverongaps = False
+      hoverongaps = False,
+      zmin = 0,
+      zmax = 50
   ))
   ## Adds black vertical lines for each depth.
   for i, col in enumerate(depth_cols):
@@ -583,10 +585,15 @@ st.plotly_chart(heat_map())
 ## Water Potential visualization
 def water_potential(wp = dl_flo, dl_gen = dl_gen):
   wp_plot = go.Figure()
-
-  wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP"], mode = "lines", name = "Observed"))
-  wp_plot.add_trace(go.Scatter(x = dl_gen["TIMESTAMP"], y = ((dl_gen["VPD"]*-0.12)-0.41), mode = "lines", name = "Baseline"))
-  wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["Pressure_Bomb"], mode = "markers", name = "User Pressure Bomb"))
+  wp["WP_high"] = wp["WP_mean"] + wp["WP_std"]
+  wp["WP_low"] = wp["WP_mean"] - wp["WP_std"]
+  wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["Pressure_Bomb"], line=dict(color="#9b2335"), mode = "markers", name = "User Pressure Bomb"))
+  wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_min"], line=dict(color="#2ca89a"), name = "Min. WP"))
+  wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_max"], line=dict(color="#2ca89a", dash = "dash"), name = "Max. WP"))
+  wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_low"], line=dict(width=0), showlegend=False, name = "Obs. - 1 SD"))
+  wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_high"], fill = "tonexty", line=dict(width=0), fillcolor="rgba(26, 111, 175, 0.42)", showlegend=False, name = "Obs. + 1 SD"))
+  wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_mean"], mode = "lines", line=dict(color="#1a6faf", width=2), name = "Observed WP"))
+  wp_plot.add_trace(go.Scatter(x = dl_gen["TIMESTAMP"], y = ((dl_gen["VPD"]*-0.12)-0.41), line=dict(color="#e07b39", width=2), mode = "lines", name = "Baseline WP"))
 
   wp_plot.update_layout(
     yaxis_title = "Water Potential (Bar)",
