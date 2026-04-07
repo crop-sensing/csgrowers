@@ -1,6 +1,6 @@
 import streamlit as st
 
-origin = "streamlit"
+origin = "local"
 
 st.set_page_config(initial_sidebar_state="expanded")
 
