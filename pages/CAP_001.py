@@ -17,7 +17,7 @@ st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 st.title("CSGrowers - Capay_001")
 
-origin = "local" ## streamlit or local
+origin = "streamlit" ## streamlit or local
 
 site = "CAP_001"
 curr_page = "CAP_001"

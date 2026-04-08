@@ -17,7 +17,7 @@ st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 st.title("CSGrowers - Oakville")
 
-origin = "local" ## streamlit or local
+origin = "streamlit" ## streamlit or local
 
 site = "OAK_001"
 curr_page = "OAK_001"

@@ -17,7 +17,7 @@ st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 st.title("CSGrowers - Winters")
 
-origin = "local" ## streamlit or local
+origin = "streamlit" ## streamlit or local
 
 site = "WIN_001"
 curr_page = "WIN_001"
@@ -111,7 +111,7 @@ def data_set_up():
       res = client.table("headers").select("value").eq("data_type", "soil_panel").eq("site", site).eq("username", email).execute()
       sql_soil_panel = res.data[0]["value"]
     except:
-      sql_soil_panel = ["0.33", "0.16", "0.45"]
+      sql_soil_panel = ["0.29", "0.15", "0.45"]
     
     ## Gets last week, filters et data
     today = pd.Timestamp.today().normalize()
