@@ -111,7 +111,7 @@ def data_set_up():
       res = client.table("headers").select("value").eq("data_type", "soil_panel").eq("site", site).eq("username", email).execute()
       sql_soil_panel = res.data[0]["value"]
     except:
-      sql_soil_panel = ["0.33", "0.14", "0.5"]
+      sql_soil_panel = ["0.23", "0.11", "0.45"]
     
     ## Gets last week, filters et data
     today = pd.Timestamp.today().normalize()
@@ -233,15 +233,6 @@ def water_balance(df: pd.DataFrame, fc: float, wp: float,
     df["Dr_mm"]  = dr_vals
     df["TAW_mm"] = taw_mm
     df["RAW_mm"] = raw_mm
-
-    def status(dr_val):
-        if dr_val > raw_mm:
-            return "Irrigate"
-        elif dr_val > raw_mm * 0.7:
-            return "Monitor"
-        return "Adequate"
-
-    df["Status"] = df["Dr_mm"].apply(status)
     return df
 
 ## Imports mapbox credentials
@@ -322,20 +313,32 @@ def sm_upload(fc, wilt_p, mad):
           "site": site,
           "username": email
         }, on_conflict="data_type,site,username").execute()
+  
+def status(dr_val, raw_mm):
+    if dr_val > raw_mm:
+      return "Irrigate"
+    elif dr_val > raw_mm * 0.7:
+      return "Monitor"
+    return "Adequate"
 
 with col4.container(border = True, height = 290):
   @st.dialog("Soil Depletion Panel", width = "medium")
   def show_soil_popup(sql_soil_panel = sql_soil_panel):
-    rz_cm = st.selectbox("Root Zone Depth (cm)", [5, 10, 20, 40, 50, 60, 75, 100])
-    fc = st.number_input("Field Capacity θ_FC (m³/m³)", 0.10, 0.60, float(sql_soil_panel[0]), 0.01,
-                            format="%.3f")
-    wilt_p = st.number_input("Wilting Point θ_WP (m³/m³)", 0.02, 0.40, float(sql_soil_panel[1]), 0.01,
-                            format="%.3f")
-    mad = st.slider("Depletion fraction p (MAD)", 0.30, 0.70, float(sql_soil_panel[2]), 0.05)
+    try:
+      fc = st.number_input("Field Capacity θ_FC (m³/m³)", 0.10, 0.60, float(st.session_state["sm_input"]["fc"]), 0.01,
+                          format="%.3f")
+      wilt_p = st.number_input("Wilting Point θ_WP (m³/m³)", 0.02, 0.40, float(st.session_state["sm_input"]["wilt_p"]), 0.01,
+                                          format="%.3f")
+      mad = st.slider("Depletion fraction p (MAD)", 0.30, 0.70, float(st.session_state["sm_input"]["mad"]), 0.05)
+    except:
+      fc = st.number_input("Field Capacity θ_FC (m³/m³)", 0.10, 0.60, float(sql_soil_panel[0]), 0.01,
+                                          format="%.3f")
+      wilt_p = st.number_input("Wilting Point θ_WP (m³/m³)", 0.02, 0.40, float(sql_soil_panel[1]), 0.01,
+                                          format="%.3f")
+      mad = st.slider("Depletion fraction p (MAD)", 0.30, 0.70, float(sql_soil_panel[2]), 0.05)
     
     if st.button("Save"):
       st.session_state["sm_input"] = {
-        "rz_cm": rz_cm,
         "fc": fc,
         "wilt_p": wilt_p,
         "mad": mad
@@ -348,25 +351,40 @@ with col4.container(border = True, height = 290):
   soil_calc_df = dl_soil_all.rename(columns = {"TIMESTAMP": "date"})
   soil_calc_df = pd.merge(soil_calc_df, et_both, on = ["date"])
   soil_calc_df = pd.merge(soil_calc_df, user_irr.rename(columns = {"Date": "date"}), on = ["date"])
+
+  
+
   if "sm_input" in st.session_state:
-    sm_result = st.session_state["sm_input"]
-    wb_results = water_balance(soil_calc_df, fc = sm_result["fc"], wp = sm_result["wilt_p"], rz_cm = sm_result["rz_cm"], mad = sm_result["mad"])
-    last = wb_results.iloc[-7:-1]
-    dr_val = float(last["Dr_mm"].mean())
-    taw_mm = float(last["TAW_mm"].mean())
-    raw_mm = float(last["RAW_mm"].mean())
-    dr_color = "inverse" if dr_val > raw_mm else "normal"
-    r1, r2, r3 = st.columns(3)
-    r1.metric("RZD (mm)", f"{dr_val:.1f}", width = "content",
-              delta=f"{'Above' if dr_val > raw_mm else 'Below'} RAW", delta_color=dr_color)
-    r2.metric("TAW (mm)", f"{taw_mm:.1f}", width = "content")
-    r3.metric("RAW / MAD (mm)", f"{raw_mm:.1f}", width = "content")
-    status_emoji = {"Irrigate": "🔴", "Monitor": "🟡", "Adequate": "🟢"}
-    br1, br2 = st.columns([2,1])
-    br1.metric("Latest Status", f"{status_emoji[last["Status"].iloc[-1]]} {last["Status"].iloc[-1]}")
-    br2. metric("Soil Depth (cm)", sm_result["rz_cm"])
+    dr_val = []
+    taw_mm = []
+    raw_mm = []
+    for depth_cm in [5, 10, 20, 40, 50, 60, 75, 100]:
+      sm_result = st.session_state["sm_input"]
+      wb_results = water_balance(soil_calc_df, fc = sm_result["fc"], wp = sm_result["wilt_p"], rz_cm = depth_cm, mad = sm_result["mad"])
+      last = wb_results.iloc[-7:-1]
+      dr_val.append(float(last["Dr_mm"].mean()))
+      taw_mm.append(float(last["TAW_mm"].mean()))
+      raw_mm.append(float(last["RAW_mm"].mean()))
   else:
-    st.write("Open soil moisture panel to display the latest data.")
+    dr_val = []
+    taw_mm = []
+    raw_mm = []
+    for depth_cm in [5, 10, 20, 40, 50, 60, 75, 100]:
+      wb_results = water_balance(soil_calc_df, fc = 0.4, wp = 0.2, rz_cm = depth_cm, mad = 0.5)
+      last = wb_results.iloc[-7:-1]
+      dr_val.append(float(last["Dr_mm"].mean()))
+      taw_mm.append(float(last["TAW_mm"].mean()))
+      raw_mm.append(float(last["RAW_mm"].mean()))
+
+  dr_color = "inverse" if np.mean(dr_val) > np.mean(raw_mm) else "normal"
+  r1, r2, r3 = st.columns(3)
+  r1.metric("RZD (mm)", f"{np.mean(dr_val):.1f}", width = "content",
+      delta=f"{'Above' if dr_val > raw_mm else 'Below'} RAW", delta_color=dr_color)
+  r2.metric("TAW (mm)", f"{np.mean(taw_mm):.1f}", width = "content")
+  r3.metric("RAW / MAD (mm)", f"{np.mean(raw_mm):.1f}", width = "content")
+  status_emoji = {"Irrigate": "🔴", "Monitor": "🟡", "Adequate": "🟢"}
+  br1, br2 = st.columns([2,1])
+  br1.metric("Latest Status", f"{status_emoji[status(np.mean(dr_val), np.mean(raw_mm))]} {status(np.mean(dr_val), np.mean(raw_mm))}")
 
 ## Tutorial/Credits/Glossary Set Up
 with col5.container(border = True, height = 290):
