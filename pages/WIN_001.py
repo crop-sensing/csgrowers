@@ -383,8 +383,7 @@ with col4.container(border = True, height = 290):
   r2.metric("TAW (mm)", f"{np.mean(taw_mm):.1f}", width = "content")
   r3.metric("RAW / MAD (mm)", f"{np.mean(raw_mm):.1f}", width = "content")
   status_emoji = {"Irrigate": "🔴", "Monitor": "🟡", "Adequate": "🟢"}
-  br1, br2 = st.columns([2,1])
-  br1.metric("Latest Status", f"{status_emoji[status(np.mean(dr_val), np.mean(raw_mm))]} {status(np.mean(dr_val), np.mean(raw_mm))}")
+  st.metric("Latest Status", f"{status_emoji[status(np.mean(dr_val), np.mean(raw_mm))]} {status(np.mean(dr_val), np.mean(raw_mm))}")
 
 ## Tutorial/Credits/Glossary Set Up
 with col5.container(border = True, height = 290):
