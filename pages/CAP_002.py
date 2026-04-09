@@ -383,8 +383,7 @@ with col4.container(border = True, height = 290):
   r2.metric("TAW (mm)", f"{np.mean(taw_mm):.1f}", width = "content")
   r3.metric("RAW / MAD (mm)", f"{np.mean(raw_mm):.1f}", width = "content")
   status_emoji = {"Irrigate": "🔴", "Monitor": "🟡", "Adequate": "🟢"}
-  br1, br2 = st.columns([2,1])
-  br1.metric("Latest Status", f"{status_emoji[status(np.mean(dr_val), np.mean(raw_mm))]} {status(np.mean(dr_val), np.mean(raw_mm))}")
+  st.metric("Latest Status", f"{status_emoji[status(np.mean(dr_val), np.mean(raw_mm))]} {status(np.mean(dr_val), np.mean(raw_mm))}")
 
 ## Tutorial/Credits/Glossary Set Up
 with col5.container(border = True, height = 290):
@@ -611,7 +610,7 @@ def water_potential(wp = dl_flo, dl_gen = dl_gen):
   wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_low"], line=dict(width=0), showlegend=False, name = "Obs. - 1 SD"))
   wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_high"], fill = "tonexty", line=dict(width=0), fillcolor="rgba(26, 111, 175, 0.42)", showlegend=False, name = "Obs. + 1 SD"))
   wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_mean"], mode = "lines", line=dict(color="#1a6faf", width=2), name = "Observed WP"))
-  wp_plot.add_trace(go.Scatter(x = dl_gen["TIMESTAMP"], y = ((dl_gen["VPD"]*-0.12)-0.41), line=dict(color="#e07b39", width=2), mode = "lines", name = "Baseline WP"))
+  wp_plot.add_trace(go.Scatter(x = dl_gen["TIMESTAMP"], y = (((dl_gen["VPD"]*-0.12)-0.41)*10), line=dict(color="#e07b39", width=2), mode = "lines", name = "Baseline WP"))
 
   wp_plot.update_layout(
     yaxis_title = "Water Potential (Bar)",
