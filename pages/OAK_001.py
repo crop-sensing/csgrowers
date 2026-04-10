@@ -124,6 +124,12 @@ def data_set_up():
 
 et_both, dl_gen, dl_soil_all, dl_flo, user_irr, template, depths, et_last_week, sql_crop_coeff, sql_soil_panel, default_val = data_set_up()
 
+DEFAULTS = {
+    "def_fc": 0.23,
+    "def_wilt_p": 0.11,
+    "def_mad": 0.45
+}
+
 ## Checks column names, time values, and amount of rows in a data frame.
 ## Returns specific error codes if user df fails test.
 def user_upload_check(df, cols = ["Date", "Irrigation", "Precipitation"]):
@@ -159,7 +165,7 @@ def supabase_upload(df, site = site, username = email, template = template):
           "site": site,
           "username": username,
     }, on_conflict="dataset_name,site,username").execute()
-    st.cache_resource.clear()
+    st.cache_data.clear()
     st.rerun()
     return None
 
@@ -190,7 +196,7 @@ def pb_check(wp):
   except:
     return "Fail"
   return wp_tab.success("Success")
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4 = st.columns([.22, .22, .22, .34])
 
 SENSOR_DEPTHS_CM = [5, 10, 20, 40, 50, 60, 75, 100] 
 LAYER_BOUNDS_MM  = [50, 100, 200, 400, 500, 600, 750, 1000] 
@@ -260,10 +266,11 @@ def crop_coeff_check(cc):
           }, on_conflict = "data_type,site,username").execute()
   return "success"
 
-with col2.container(border = True, height = 290):
-  eto_mean = et_last_week["eto"].mean()
+with col3.container(border = True, height = 290):
+  eto = (et_last_week["eto"]/25.4)
+  eto_sum = eto.sum()
   st.markdown(f"""
-              #### ETo (Last 7 Days): {eto_mean:.3f}
+              #### ETo (Last 7 Days): {eto_sum:.3f} in.
               """
               )
   
@@ -286,22 +293,24 @@ with col2.container(border = True, height = 290):
   except:
     st.toast("Input must be a number.")
     cc = 1
+  eto_cc = eto*cc
+  eto_cc = eto_cc.sum()
   st.markdown(f"""
-              #### ETc (Last 7 Days): **{eto_mean * cc:.3f}**""")
+              #### ETc (Last 7 Days): **{eto_cc:.3f} in.**""")
 
 ## Static text display summary ET info
-with col3.container(border = True, height = 137):
-  eta_mean = et_last_week["eta"].mean()
+with col2.container(border = True, height = 137):
+  eta_sum = et_last_week["eta"].sum()/25.4
   st.markdown(f"""
            #### ETa (Last 7 Days):
-           #### {eta_mean:.3f}
+           #### {eta_sum:.3f} in.
            """)
 
-with col3.container(border = True, height = 138):
-  fret_mean = et_last_week["etof"].mean()
+with col2.container(border = True, height = 138):
+  fret_mean = et_last_week["etof"].mean()/25.4
   st.markdown(f"""
            #### FrET (Last 7 Days):
-           #### {fret_mean:.3f}
+           #### {fret_mean:.3f} in.
            """)
 
 ## Function that checks validity of user SWC input before allowing a save, currently WIP
@@ -322,21 +331,26 @@ def status(dr_val, raw_mm):
     return "Adequate"
 
 with col4.container(border = True, height = 290):
+  for key, val in DEFAULTS.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
   @st.dialog("Soil Depletion Panel", width = "medium")
   def show_soil_popup(sql_soil_panel = sql_soil_panel):
+    if st.button("Reset Values to Default"):
+      for key, val in DEFAULTS.items():
+          st.session_state[key] = val
     try:
       fc = st.number_input("Field Capacity θ_FC (m³/m³)", 0.10, 0.60, float(st.session_state["sm_input"]["fc"]), 0.01,
-                          format="%.3f")
+                          format="%.3f", key = "def_fc")
       wilt_p = st.number_input("Wilting Point θ_WP (m³/m³)", 0.02, 0.40, float(st.session_state["sm_input"]["wilt_p"]), 0.01,
-                                          format="%.3f")
-      mad = st.slider("Depletion fraction p (MAD)", 0.30, 0.70, float(st.session_state["sm_input"]["mad"]), 0.05)
+                                          format="%.3f", key = "def_wilt_p")
+      mad = st.slider("Depletion fraction p (MAD)", 0.30, 0.70, float(st.session_state["sm_input"]["mad"]), 0.05, key = "def_mad")
     except:
       fc = st.number_input("Field Capacity θ_FC (m³/m³)", 0.10, 0.60, float(sql_soil_panel[0]), 0.01,
-                                          format="%.3f")
+                                          format="%.3f", key = "def_fc")
       wilt_p = st.number_input("Wilting Point θ_WP (m³/m³)", 0.02, 0.40, float(sql_soil_panel[1]), 0.01,
-                                          format="%.3f")
-      mad = st.slider("Depletion fraction p (MAD)", 0.30, 0.70, float(sql_soil_panel[2]), 0.05)
-    
+                                          format="%.3f", key = "def_wilt_p")
+      mad = st.slider("Depletion fraction p (MAD)", 0.30, 0.70, float(sql_soil_panel[2]), 0.05, key = "def_mad")
     if st.button("Save"):
       st.session_state["sm_input"] = {
         "fc": fc,
@@ -345,13 +359,13 @@ with col4.container(border = True, height = 290):
       }
       sm_upload(fc=fc, wilt_p=wilt_p, mad=mad)
       st.rerun()
+    
   if st.button("Open Soil Moisture Panel", use_container_width=True):
     show_soil_popup()
 
   soil_calc_df = dl_soil_all.rename(columns = {"TIMESTAMP": "date"})
   soil_calc_df = pd.merge(soil_calc_df, et_both, on = ["date"])
   soil_calc_df = pd.merge(soil_calc_df, user_irr.rename(columns = {"Date": "date"}), on = ["date"])
-
   
 
   if "sm_input" in st.session_state:
@@ -362,9 +376,9 @@ with col4.container(border = True, height = 290):
       sm_result = st.session_state["sm_input"]
       wb_results = water_balance(soil_calc_df, fc = sm_result["fc"], wp = sm_result["wilt_p"], rz_cm = depth_cm, mad = sm_result["mad"])
       last = wb_results.iloc[-7:-1]
-      dr_val.append(float(last["Dr_mm"].mean()))
-      taw_mm.append(float(last["TAW_mm"].mean()))
-      raw_mm.append(float(last["RAW_mm"].mean()))
+      dr_val.append(float(last["Dr_mm"].sum()/25.4))
+      taw_mm.append(float(last["TAW_mm"].sum()/25.4))
+      raw_mm.append(float(last["RAW_mm"].sum()/25.4))
   else:
     dr_val = []
     taw_mm = []
@@ -372,56 +386,20 @@ with col4.container(border = True, height = 290):
     for depth_cm in [5, 10, 20, 40, 50, 60, 75, 100]:
       wb_results = water_balance(soil_calc_df, fc = 0.4, wp = 0.2, rz_cm = depth_cm, mad = 0.5)
       last = wb_results.iloc[-7:-1]
-      dr_val.append(float(last["Dr_mm"].mean()))
-      taw_mm.append(float(last["TAW_mm"].mean()))
-      raw_mm.append(float(last["RAW_mm"].mean()))
+      dr_val.append(float(last["Dr_mm"].sum()/25.4))
+      taw_mm.append(float(last["TAW_mm"].sum()/25.4))
+      raw_mm.append(float(last["RAW_mm"].sum()/25.4))
 
   dr_color = "inverse" if np.mean(dr_val) > np.mean(raw_mm) else "normal"
   r1, r2, r3 = st.columns(3)
-  r1.metric("RZD (mm)", f"{np.mean(dr_val):.1f}", width = "content",
+  r1.metric("RZD (in)", f"{np.mean(dr_val):.1f}", width = "content",
       delta=f"{'Above' if dr_val > raw_mm else 'Below'} RAW", delta_color=dr_color)
-  r2.metric("TAW (mm)", f"{np.mean(taw_mm):.1f}", width = "content")
-  r3.metric("RAW / MAD (mm)", f"{np.mean(raw_mm):.1f}", width = "content")
+  r2.metric("TAW (in)", f"{np.mean(taw_mm):.1f}", width = "content")
+  r3.metric("RAW / MAD (in)", f"{np.mean(raw_mm):.1f}", width = "content")
   status_emoji = {"Irrigate": "🔴", "Monitor": "🟡", "Adequate": "🟢"}
   st.metric("Latest Status", f"{status_emoji[status(np.mean(dr_val), np.mean(raw_mm))]} {status(np.mean(dr_val), np.mean(raw_mm))}")
 
-## Tutorial/Credits/Glossary Set Up
-with col5.container(border = True, height = 290):
-  @st.dialog("Tutorial", width = "large")
-  def show_tutorial():
-      st.subheader("Introduction")
-      st.write("The CSGrowers App is a pilot program developed to give growers a dashboard to view nearly live data and the ability to save irrigation data, pressure bomb data, and customizations to data and data visualizatoins.")
-      st.write("The following tutorial will give you the basics on how to interface with this app. For more information on our methods of gathering, manipulating, and storing data visit the [GitHub Repository](https://github.com/crop-sensing/csgrowers)" \
-      " for CSGrowers.")
-      st.subheader("Overview")
-      st.write("The CSGrowers dashboard consists of three main components: data summary/target setting, data tables, and data visualizations. " \
-      "The targets and inputs you give in the first two components affect the data tables and visualizations. " \
-      "Along with these three main parts, we also allow you to select the date range of data you would like to view. " \
-      "All together, these can give you a versatile experience to view and manipulate your data.")
-      st.subheader("Data Summary / Target Setting")
-      st.write("At the top of the page you will see five columns of containers: a map, ETo data/crop coefficient customizer, ETa/FrET, Soil Mostiure Depletion/Target setting, and the box that contains general information. "\
-               "The map displays a marker of the where the tower is at the site you are currently viewing. The ETo box shows summary data from the last seven days of ETo data from CIMIS (see credits for more information), " \
-               "an input for a custom crop coefficient if you choose (or you can use our standard value), and there is an updated ETo value based on this coefficient. "\
-               "This coefficient will also update the ETo values you see on the rest of the app. If you choose to use a custom crop coefficient, you can save it to the cloud and it will be loaded automatically next time you sign into the app. " \
-               "The ETa/FrET boxes work indentically to the ETo box, but they display ETa and FrET from OpenET (for more information see glossary). "\
-               "The Soil Moisture Depletion box functions similarly to the ETo box, where there is the soil depletion for the last week is displayed. "\
-               "You can set, save, and load a custom soil mositure target with the buttons above the input box.")
-  @st.dialog("Glossary")
-  def show_glossary():
-      st.write("**ET**: Evapotranspiration")
-      st.write("**ETa**: Ensemble ET, gathered through satelite via OpenET")
-      st.write("**ETo**: Reference ET, via CIMIS")
-      st.write("**FrET**: Fractional ET, a ratio of ETo/ETa, via OpenET")
-      st.write("**SWC**: Soil Water Content, via SAWS Towers")
-      st.write("**VPD**: Vapor Pressure Deficit, via SAWS Towers")
-      st.write("**WP**: Water Potential, gathered via SAWS Towers")
 
-  ## Shows tutorial/credits on click
-  st.write("#### CSGrowers Information:")
-  if st.button("Tutorial", use_container_width=True):
-    show_tutorial()
-  if st.button("Glossary", use_container_width=True):
-    show_glossary()
   
 date1, date2 = st.columns(2)
 date_start = date1.date_input("Start Date", value = datetime.date(int(datetime.date.today().strftime("%Y")), 1, 1))
@@ -433,6 +411,9 @@ def time_restrict(date_start = date_start, date_end = date_end,
   start = pd.to_datetime(date_start)
   end = pd.to_datetime(date_end)
   et_both = et_both[(et_both["date"] >= start) & (et_both["date"] <= end)]
+  et_both["eto"] = et_both["eto"]/25.4
+  et_both["eta"] = et_both["eta"]/25.4
+  et_both["etof"] = et_both["etof"]/25.4
   dl_soil_all = dl_soil_all[(dl_soil_all["TIMESTAMP"] >= start) & (dl_soil_all["TIMESTAMP"] <= end)]
   dl_flo = dl_flo[(dl_flo["TIMESTAMP"] >= start) & (dl_flo["TIMESTAMP"] <= end)]
   dl_gen = dl_gen[(dl_gen["TIMESTAMP"] >= start) & (dl_gen["TIMESTAMP"] <= end)]
@@ -455,9 +436,9 @@ app_df = irr_tab.data_editor(user_irr.rename(columns = {"date": "Date", "irr": "
                              },
                              hide_index = True,
                              disabled = ["date"])
-popup = irr_tab.popover("Upload Data")
-popup.download_button(label = "Download Template File (Selected Year)", data = template.to_csv().encode("utf-8"), file_name = f"csgrowers_irrigation_template.csv")
-user_file = popup.file_uploader("Upload Data", type = "csv")
+# popup = irr_tab.popover("Upload Data")
+# popup.download_button(label = "Download Template File (Selected Year)", data = template.to_csv().encode("utf-8"), file_name = f"csgrowers_irrigation_template.csv")
+# user_file = popup.file_uploader("Upload Data", type = "csv")
 
 ## Only triggers if user uploads a csv
 ## Runs a check on upload, uploads to Box if successful
@@ -477,7 +458,7 @@ user_file = popup.file_uploader("Upload Data", type = "csv")
 
 ## Allows user to download and save current data frame, will only save if DF passes check.
 down_popup = irr_tab.popover("Download & Save")
-if down_popup.download_button("Download & Save (this will overwrite your file in the cloud)", data = app_df.to_csv().encode('utf-8'), file_name = 'user_water_input.csv'):
+if down_popup.download_button("Download & Save", data = app_df.to_csv().encode('utf-8'), file_name = 'user_water_input.csv'):
   checkdown, codes = user_upload_check(app_df)
   if checkdown == True:
     supabase_upload(app_df)
@@ -486,7 +467,7 @@ if down_popup.download_button("Download & Save (this will overwrite your file in
     irr_tab.error("ERROR: " +  " ERROR: ".join(codes) + " --- file did not save to cloud.")
 
 ## Allows user to save current data frame, will only save if DF passes check.
-if down_popup.button("Save (this will overwrite your file in the cloud)"):
+if down_popup.button("Save"):
   checkdown, codes = user_upload_check(app_df)
   if checkdown == True:
     supabase_upload(app_df)
@@ -522,19 +503,21 @@ dl_gen = dl_gen[["TIMESTAMP", "VPD", "Air_Temperature (C)", "Air_Temperature (F)
 weather_tab.dataframe(dl_gen.rename(columns = {"TIMESTAMP": "Date"}), hide_index = True,
                  column_config={"Date": st.column_config.DateColumn()})
 
+bottom_margin = 0
+
 ## Irrigation Visualization
 def irr_vis(irr = app_df):
   irr_plot = go.Figure()
 
   irr_plot.add_trace(go.Bar(x = pd.to_datetime(irr["Date"]), y = irr["Irrigation"], name = "Irrigation (in)", showlegend = True))
   irr_plot.update_layout(
-    margin = dict(t = 0, b = 25, r = 150),
+    margin = dict(t = 0, b = bottom_margin, r = 150),
     yaxis_title = "Irrigation Applied (in)"
   )
   return irr_plot
 
-st.subheader("Applied Irrigation")
-st.plotly_chart(irr_vis())
+irr_tab.subheader("Applied Irrigation")
+irr_tab.plotly_chart(irr_vis())
 
 ## ET Visualization
 def et_vis(et = et_both):
@@ -542,21 +525,21 @@ def et_vis(et = et_both):
   
   et_plot.add_trace(go.Scatter(x = et["date"], y = et["eto"], name = "ETc via CIMIS"), secondary_y=False)
   et_plot.add_trace(go.Scatter(x = et["date"], y = et["eta"], name = "ETa via OpenET"), secondary_y=False)
-  et_plot.add_trace(go.Scatter(x = et["date"], y = et["etof"], name = "FrET via OpenET"), secondary_y=True)
+  et_plot.add_trace(go.Scatter(x = et["date"], y = et["etof"], name = "FrET via OpenET", mode = "markers"), secondary_y=True)
   et_plot.update_layout(
-    margin = dict(t = 0, b = 25),
+    margin = dict(t = 0),
     hovermode = "x unified"
   )
-  et_plot.update_yaxes(title_text = "ETa & ETo (mm)", secondary_y=False)
+  et_plot.update_yaxes(title_text = "ETa & ETc (mm)", secondary_y=False)
   et_plot.update_yaxes(title_text = "FrET (mm)", secondary_y=True)
   return et_plot
 
-st.subheader("Evapotranspiration")
-st.plotly_chart(et_vis())
+et_tab.subheader("Evapotranspiration")
+et_tab.plotly_chart(et_vis())
 
 ## Soil Heat Map Visualization along with depth filtering
-st.subheader("Soil Moisture Content")
-heat_select = st.selectbox("Soil Moisture Depth:", ["All", "Near Surface", "Mid Surface", "Deep Surface"])
+soil_tab.subheader("Soil Moisture Content")
+heat_select = soil_tab.selectbox("Soil Moisture Depth:", ["All", "Near Surface", "Mid Surface", "Deep Surface"])
 def heat_map(dl_soil_all = dl_soil_all, filter = heat_select, depths = depths):
   if filter == "All":
     depths = depths
@@ -590,14 +573,14 @@ def heat_map(dl_soil_all = dl_soil_all, filter = heat_select, depths = depths):
       ))
 
   heatmap.update_layout(
-    margin = dict(t = 0, b = 25),
+    margin = dict(t = 0, b = bottom_margin),
     yaxis = dict(autorange = "reversed")
   )
 
   return heatmap
 
 
-st.plotly_chart(heat_map())
+soil_tab.plotly_chart(heat_map())
 
 ## Water Potential visualization
 def water_potential(wp = dl_flo, dl_gen = dl_gen):
@@ -615,28 +598,95 @@ def water_potential(wp = dl_flo, dl_gen = dl_gen):
   wp_plot.update_layout(
     yaxis_title = "Water Potential (Bar)",
     hovermode = "x unified",
-    margin = dict(t = 0)
+    margin = dict(t = 0, b = bottom_margin)
   )
+
+  # wp_plot.update_xaxes(
+  #   dtick = 7*24*60*60*1000,
+  #   tickformat="%b\n%d\n%Y",
+  #   title = "Date"
+  # )
 
   return wp_plot
 
-st.subheader("Water Potential")
-st.plotly_chart(water_potential())
+wp_tab.subheader("Water Potential")
+wp_tab.plotly_chart(water_potential())
 
 ## Weather Plot
 def weather_plot(dl_gen = dl_gen):
-  weather = go.Figure()
+  weather = make_subplots(specs=[[{"secondary_y": True}]])
 
-  weather.add_trace(go.Scatter(x=dl_gen["TIMESTAMP"], y=dl_gen["Air_Temperature (F)"], mode="lines", name="Air Temperature (F)", line=dict(color="red")))
+  weather.add_trace(go.Scatter(x=dl_gen["TIMESTAMP"], y=dl_gen["Air_Temperature (F)"], mode="lines", name="Air Temperature (F)", line=dict(color="red")), secondary_y=False)
   # weather.add_trace(go.Scatter(x=dl_gen["TIMESTAMP"], y=dl_gen["Air_Temperature (C)"], mode="lines", name="Air Temperature (C)"))
-  weather.add_trace(go.Scatter(x=dl_gen["TIMESTAMP"], y=dl_gen["Relative_Humidity (%)"], mode="lines", name="Relative Humidity (%)"))
+  weather.add_trace(go.Scatter(x=dl_gen["TIMESTAMP"], y=dl_gen["VPD"], mode="lines", name="VPD (kPa)"), secondary_y=True)
 
   weather.update_layout(
     yaxis_title = "Value",
     hovermode = "x unified",
-    margin = dict(t = 0)
+    margin = dict(t = 0, b = bottom_margin)
   )
+  weather.update_yaxes(title_text = "Air Temperature (F)", secondary_y=False)
+  weather.update_yaxes(title_text = "VPD (kPa)", secondary_y=True)
+
+  # weather.update_xaxes(
+  #   dtick = 7*24*60*60*1000,
+  #   tickformat="%b\n%d\n%Y",
+  #   title = "Date"
+  # )
   return weather
 
-st.subheader("Weather")
-st.plotly_chart(weather_plot())
+weather_tab.subheader("Weather")
+weather_tab.plotly_chart(weather_plot())
+
+st.write("")
+st.write("")
+st.write("")
+st.write("")
+st.write("")
+st.write("")
+st.write("")
+st.write("")
+st.write("")
+st.divider()
+st.write("")
+st.write("")
+st.write("")
+## Tutorial/Credits/Glossary Set Up
+text_col1, text_col2, text_col3, text_col4, text_col5, text_col6, text_col7 = st.columns(7)
+info_col1, info_col2, info_col3, info_col4, info_col5, info_col6 = st.columns(6)
+
+@st.dialog("Tutorial", width = "large")
+def show_tutorial():
+    st.subheader("Introduction")
+    st.write("The CSGrowers App is a pilot program developed to give growers a dashboard to view nearly live data and the ability to save irrigation data, pressure bomb data, and customizations to data and data visualizatoins.")
+    st.write("The following tutorial will give you the basics on how to interface with this app. For more information on our methods of gathering, manipulating, and storing data visit the [GitHub Repository](https://github.com/crop-sensing/csgrowers)" \
+    " for CSGrowers.")
+    st.subheader("Overview")
+    st.write("The CSGrowers dashboard consists of three main components: data summary/target setting, data tables, and data visualizations. " \
+    "The targets and inputs you give in the first two components affect the data tables and visualizations. " \
+    "Along with these three main parts, we also allow you to select the date range of data you would like to view. " \
+    "All together, these can give you a versatile experience to view and manipulate your data.")
+    st.subheader("Data Summary / Target Setting")
+    st.write("At the top of the page you will see five columns of containers: a map, ETo data/crop coefficient customizer, ETa/FrET, Soil Mostiure Depletion/Target setting, and the box that contains general information. "\
+      "The map displays a marker of the where the tower is at the site you are currently viewing. The ETo box shows summary data from the last seven days of ETo data from CIMIS (see credits for more information), " \
+      "an input for a custom crop coefficient if you choose (or you can use our standard value), and there is an updated ETo value based on this coefficient. "\
+      "This coefficient will also update the ETo values you see on the rest of the app. If you choose to use a custom crop coefficient, you can save it to the cloud and it will be loaded automatically next time you sign into the app. " \
+      "The ETa/FrET boxes work indentically to the ETo box, but they display ETa and FrET from OpenET (for more information see glossary). "\
+      "The Soil Moisture Depletion box functions similarly to the ETo box, where there is the soil depletion for the last week is displayed. "\
+      "You can set, save, and load a custom soil mositure target with the buttons above the input box.")
+@st.dialog("Glossary")
+def show_glossary():
+    st.write("**ET**: Evapotranspiration")
+    st.write("**ETa**: Ensemble ET, gathered through satelite via OpenET")
+    st.write("**ETo**: Reference ET, via CIMIS")
+    st.write("**FrET**: Fractional ET, a ratio of ETo/ETa, via OpenET")
+    st.write("**SWC**: Soil Water Content, via SAWS Towers")
+    st.write("**VPD**: Vapor Pressure Deficit, via SAWS Towers")
+    st.write("**WP**: Water Potential, gathered via SAWS Towers")
+
+  ## Shows tutorial/credits on click
+
+if info_col3.button("Get Started", use_container_width=True):
+  show_tutorial()
+if info_col4.button("Glossary", use_container_width=True):
+  show_glossary()

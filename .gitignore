@@ -4,3 +4,4 @@ mapbox_info.json
 supabase_updater.py
 cimis_updater.py
 openet_updater.py
+monthly_et.py

@@ -1,6 +1,6 @@
 import streamlit as st
 
-origin = "streamlit"
+origin = "local"
 
 st.set_page_config(initial_sidebar_state="expanded")
 
@@ -18,10 +18,12 @@ def get_authorized_pages():
     if email.endswith("@ucdavis.edu"):
         pages.append(st.Page("pages/CAP_001.py", title="CAP_001", icon="🌳"))
         pages.append(st.Page("pages/CAP_002.py", title="CAP_002", icon="🌳"))
-
-    if email in ["crpetrosian@ucdavis.edu", "meswintek@ucdavis.edu", "nbambach@ucdavis.edu", "krknipper@ucdavis.edu"]:
         pages.append(st.Page("pages/OAK_001.py", title="OAK_001", icon="🍇"))
         pages.append(st.Page("pages/WIN_001.py", title="WIN_001", icon="🌳"))
+
+    elif email.endswith("swintekmina@gmail.com"):
+        pages.append(st.Page("pages/CAP_001.py", title="CAP_001", icon="🌳"))
+        pages.append(st.Page("pages/CAP_002.py", title="CAP_002", icon="🌳"))
 
     return pages
 
