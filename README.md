@@ -22,9 +22,11 @@ Our third source of data for our dashboard comes from our towers installed at th
 ### Credits
 This app and repository was created and is managed by Audrey Petrosian.
 
-Consultation on content and science provided by Nicolas Bambach and Kyle Knipper.
+Consultation on content and science provided by Nicolas Bambach (Ph.D.) and Kyle Knipper(Ph.D.).
 
-The towers were set-up and are monitored primarily by Sebastian Castro-Bustamante and Karem Meza Capcha. Special thanks to our technicians (Peter Tolentino, Madeline Do, Tessa Guentensperger, and Carlos Perez) for all their work in and out of the field to help make projects like this possible.
+The towers were set-up and are monitored primarily by Sebastian Castro-Bustamante (M.Sc.) and Karem Meza Capcha (Ph.D.). Special thanks to our technicians (Peter Tolentino, Madeline Do, Tessa Guentensperger, and Carlos Perez) for all their work in and out of the field to help make projects like this possible.
+
+Project funded by the Almond Board of California, ID #WATER16-Bambach
 
 Refernce ET provided by the California Irrigation Management Information System (CIMIS) a part of the California Department of Water Resoures, CIMIS can be accessed [here](https://cimis.water.ca.gov/Default.aspx).
 
