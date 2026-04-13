@@ -21,7 +21,7 @@ def get_authorized_pages():
         pages.append(st.Page("pages/OAK_001.py", title="OAK_001", icon="🍇"))
         pages.append(st.Page("pages/WIN_001.py", title="WIN_001", icon="🌳"))
 
-    elif email.endswith("swintekmina@gmail.com"):
+    elif email.endswith("mcox@capayfarms.com"):
         pages.append(st.Page("pages/CAP_001.py", title="CAP_001", icon="🌳"))
         pages.append(st.Page("pages/CAP_002.py", title="CAP_002", icon="🌳"))
 
