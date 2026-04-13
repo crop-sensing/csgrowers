@@ -1,6 +1,6 @@
 import streamlit as st
 st.set_page_config(layout = "wide", initial_sidebar_state = "expanded")
-# st.header(f"Hello! Welcome to CSGrowers, {st.user.name}!")
+st.header(f"Hello! Welcome to CSGrowers, {st.user.name}!")
 st.write("")
 if st.button("Log Out"):
     st.logout()
@@ -45,6 +45,8 @@ st.write("""
 - Consultation on content and science provided by Nicolas Bambach (PhD) and Kyle Knipper (PhD).
 
 - The towers were set-up and are monitored primarily by Sebastian Castro-Bustamante (MSc) and Karem Meza Capcha (PhD). Special thanks to our technicians (Peter Tolentino, Madeline Do, Tessa Guentensperger, and Carlos Perez) for all their work in and out of the field to help make projects like this possible.
+         
+- Project funded by the Almond Board of California, ID #WATER16-Bambach
 
 - Refernce ET provided by the California Irrigation Management Information System (CIMIS) a part of the California Department of Water Resoures, CIMIS can be accessed [here](https://cimis.water.ca.gov/Default.aspx).
 

@@ -17,7 +17,7 @@ st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
 st.title("CSGrowers - Capay_002")
 
-origin = "local" ## streamlit or local
+origin = "streamlit" ## streamlit or local
 
 site = "CAP_002"
 curr_page = "CAP_002"
@@ -203,11 +203,12 @@ LAYER_BOUNDS_MM  = [50, 100, 200, 400, 500, 600, 750, 1000]
 
 def layer_thickness_in_rz(rz_mm: float) -> np.ndarray:
     thick = np.zeros(len(SENSOR_DEPTHS_CM))
+    layer_tops = [0] + LAYER_BOUNDS_MM[:-1]
     for i in range(len(SENSOR_DEPTHS_CM)):
-        top = LAYER_BOUNDS_MM[i]
+        top = layer_tops[i]
         if top >= rz_mm:
             break
-        bot = min(LAYER_BOUNDS_MM[i + 1], rz_mm)
+        bot = min(LAYER_BOUNDS_MM[i], rz_mm)
         thick[i] = bot - top
     return thick
 
@@ -215,6 +216,7 @@ def layer_thickness_in_rz(rz_mm: float) -> np.ndarray:
 def compute_storage(df: pd.DataFrame, rz_mm: float) -> pd.Series:
     thick = layer_thickness_in_rz(rz_mm)
     swc_cols = [f"SWC_{d}cm" for d in SENSOR_DEPTHS_CM]
+    df[swc_cols] = df[swc_cols].ffill()  # carry last known reading forward
     storage = (df[swc_cols].values * thick).sum(axis=1)
     return pd.Series(storage, index=df.index, name="Storage_mm")
 
@@ -350,7 +352,7 @@ with col4.container(border = True, height = 290):
                                           format="%.3f", key = "def_fc")
       wilt_p = st.number_input("Wilting Point θ_WP (m³/m³)", 0.02, 0.40, float(sql_soil_panel[1]), 0.01,
                                           format="%.3f", key = "def_wilt_p")
-      mad = st.slider("Depletion fraction p (MAD)", 0.30, 0.70, float(sql_soil_panel[2]), 0.05, key = "def_mad")
+      mad = st.slider("Depletion Fraction (MAD)", 0.30, 0.70, float(sql_soil_panel[2]), 0.05, key = "def_mad")
     if st.button("Save"):
       st.session_state["sm_input"] = {
         "fc": fc,
@@ -367,38 +369,37 @@ with col4.container(border = True, height = 290):
   soil_calc_df = pd.merge(soil_calc_df, et_both, on = ["date"])
   soil_calc_df = pd.merge(soil_calc_df, user_irr.rename(columns = {"Date": "date"}), on = ["date"])
   
-
+  
   if "sm_input" in st.session_state:
     dr_val = []
     taw_mm = []
     raw_mm = []
-    for depth_cm in [5, 10, 20, 40, 50, 60, 75, 100]:
-      sm_result = st.session_state["sm_input"]
-      wb_results = water_balance(soil_calc_df, fc = sm_result["fc"], wp = sm_result["wilt_p"], rz_cm = depth_cm, mad = sm_result["mad"])
-      last = wb_results.iloc[-7:-1]
-      dr_val.append(float(last["Dr_mm"].sum()/25.4))
-      taw_mm.append(float(last["TAW_mm"].sum()/25.4))
-      raw_mm.append(float(last["RAW_mm"].sum()/25.4))
+    sm_result = st.session_state["sm_input"]
+    wb_results = water_balance(soil_calc_df, fc=sm_result["fc"], wp=sm_result["wilt_p"],
+                                                                    rz_cm=100, mad=sm_result["mad"])
+    last = wb_results.iloc[-7:-1]
+    
+    dr_val  = float(last["Dr_mm"].mean() / 25.4)
+    taw_val = float(last["TAW_mm"].iloc[0] / 25.4)
+    raw_val = float(last["RAW_mm"].iloc[0] / 25.4)
   else:
     dr_val = []
     taw_mm = []
     raw_mm = []
-    for depth_cm in [5, 10, 20, 40, 50, 60, 75, 100]:
-      wb_results = water_balance(soil_calc_df, fc = 0.4, wp = 0.2, rz_cm = depth_cm, mad = 0.5)
-      last = wb_results.iloc[-7:-1]
-      dr_val.append(float(last["Dr_mm"].sum()/25.4))
-      taw_mm.append(float(last["TAW_mm"].sum()/25.4))
-      raw_mm.append(float(last["RAW_mm"].sum()/25.4))
-
-  dr_color = "inverse" if np.mean(dr_val) > np.mean(raw_mm) else "normal"
+    wb_results = water_balance(soil_calc_df, fc=0.23, wp=0.11, rz_cm=100, mad=0.45)
+    last = wb_results.iloc[-7:-1]
+    
+    dr_val  = float(last["Dr_mm"].mean() / 25.4)
+    taw_val = float(last["TAW_mm"].iloc[0] / 25.4)
+    raw_val = float(last["RAW_mm"].iloc[0] / 25.4)
+  dr_color = "inverse" if np.sum(dr_val) > np.sum(raw_mm) else "normal"
   r1, r2, r3 = st.columns(3)
-  r1.metric("RZD (in)", f"{np.mean(dr_val):.1f}", width = "content",
-      delta=f"{'Above' if dr_val > raw_mm else 'Below'} RAW", delta_color=dr_color)
-  r2.metric("TAW (in)", f"{np.mean(taw_mm):.1f}", width = "content")
-  r3.metric("RAW / MAD (in)", f"{np.mean(raw_mm):.1f}", width = "content")
+  r1.metric("RZD (in)", f"{np.sum(dr_val):.1f}", width = "content",
+      delta=f"{'Above' if dr_val > raw_val else 'Below'} RAW", delta_color=dr_color)
+  r2.metric("TAW (in)", f"{taw_val:.1f}", width = "content")
+  r3.metric("RAW / MAD (in)", f"{np.sum(raw_val):.1f}", width = "content")
   status_emoji = {"Irrigate": "🔴", "Monitor": "🟡", "Adequate": "🟢"}
-  st.metric("Latest Status", f"{status_emoji[status(np.mean(dr_val), np.mean(raw_mm))]} {status(np.mean(dr_val), np.mean(raw_mm))}")
-
+  st.metric("Latest Status", f"{status_emoji[status(np.sum(dr_val), np.sum(raw_mm))]} {status(np.sum(dr_val), np.sum(raw_mm))}")
 
   
 date1, date2 = st.columns(2)
@@ -435,7 +436,7 @@ app_df = irr_tab.data_editor(user_irr.rename(columns = {"date": "Date", "irr": "
                                "Precipitation": st.column_config.NumberColumn(min_value = 0, max_value = 10)
                              },
                              hide_index = True,
-                             disabled = ["date"])
+                             disabled = ["Date"])
 # popup = irr_tab.popover("Upload Data")
 # popup.download_button(label = "Download Template File (Selected Year)", data = template.to_csv().encode("utf-8"), file_name = f"csgrowers_irrigation_template.csv")
 # user_file = popup.file_uploader("Upload Data", type = "csv")
@@ -530,8 +531,8 @@ def et_vis(et = et_both):
     margin = dict(t = 0),
     hovermode = "x unified"
   )
-  et_plot.update_yaxes(title_text = "ETa & ETc (mm)", secondary_y=False)
-  et_plot.update_yaxes(title_text = "FrET (mm)", secondary_y=True)
+  et_plot.update_yaxes(title_text = "ETa & ETc (in)", secondary_y=False)
+  et_plot.update_yaxes(title_text = "FrET (in)", secondary_y=True)
   return et_plot
 
 et_tab.subheader("Evapotranspiration")
@@ -678,8 +679,13 @@ def show_tutorial():
 def show_glossary():
     st.write("**ET**: Evapotranspiration")
     st.write("**ETa**: Ensemble ET, gathered through satelite via OpenET")
+    st.write("**ETc**: Crop ET, Reference ET * Crop Coefficient, where Crop Coefficient is decided based on crop and time of year")
     st.write("**ETo**: Reference ET, via CIMIS")
     st.write("**FrET**: Fractional ET, a ratio of ETo/ETa, via OpenET")
+    st.write("**MAD**: Management Allowed Depletion")
+    st.write("**RAW**: Readily Available Water")
+    st.write("**RZD**: Root Zone Depletion")
+    st.write("**TAW**: Total Available Water")
     st.write("**SWC**: Soil Water Content, via SAWS Towers")
     st.write("**VPD**: Vapor Pressure Deficit, via SAWS Towers")
     st.write("**WP**: Water Potential, gathered via SAWS Towers")
