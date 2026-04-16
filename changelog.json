@@ -1,0 +1,15 @@
+[
+    {
+        "version": "1.0.0",
+        "date": "2026-04-16",
+        "changes": [
+            {"type": "feature", "text": "Added Changelog (what you're reading right now)!"},
+            {"type": "feature", "text": "Added Precipitation measurements to Irrigation tab. Data can still be edited."},
+            {"type": "improvement", "text": "Revamped external naming of certain orchards."},
+            {"type": "improvement", "text": "Improved logic on who sees what aspects of the app."},
+            {"type": "improvement", "text": "Users can input Irrigation, Precipitation, and Pressure Bomb data to the thousandth place."},
+            {"type": "improvement", "text": "Tutorial overhaul, users can click through nine pages with pictures, available at the bottom of every page."},
+            {"type": "bug fix", "text": "Fixed issue where label underneath RZD would sometimes show the wrong label."}
+        ]
+    }
+]

@@ -1,9 +1,15 @@
 import streamlit as st
+import json
 st.set_page_config(layout = "wide", initial_sidebar_state = "expanded")
 st.header(f"Hello! Welcome to CSGrowers, {st.user.name}!")
 st.write("")
 if st.button("Log Out"):
     st.logout()
+
+email = st.user.email
+
+admin_emails = ["@ucdavis.edu", "@usda.gov"]
+
 st.sidebar.subheader("Use the navigational sidebar to select your desired site.")
 st.write("")
 st.subheader("General Information:")
@@ -11,8 +17,10 @@ st.subheader("General Information:")
 faq, data_issues = st.tabs(["FAQ", "Known Issues"])
 
 faq_content = {
-    "Why can I not see data from today?": "Our data updates at about 9:30am PT daily, due to UCD restriction, data updates can potentially lag, especially during the weekend.",
-    "How far back does your data go?": "As of March 2026, the sites that are a part of our pilot project have towers that were set up in the summer of 2025. August 1st was about the time that all towers were online and had their intitial issues resolved. OpenET and CIMIS have an older database, but we only display data from these resources for days correspond with tower data."
+    "What is the latency of your data?": """Our database refreshes at about 9:30am (PT) daily. Expect incoming data to be a day behind, if the data begins to lag behind check the 'Known Issues' tab for more information.""",
+    "How far back does your data go?": "As of March 2026, the sites that are a part of our pilot project have towers that were set up in the summer of 2025. August 1st was about the time that all towers were online and had their intitial issues resolved. OpenET and CIMIS have an older database, but we only display data from these resources for days correspond with tower data.",
+    "Can I download the data I see on your website?": "Yes! If you hover over your desired table, click the down arrow to download the current table.",
+    "Who can view the pages for my site?": "CSGrowers team members (certain Crop Sensing Group members, including UC Davis and USDA employees) and you, the grower, are currently the only ones who have access to your orchard's page(s), data, and known issues specific to your site. We are using Google's OAuth service to whitelist specific users to allow them to access this app and further permissions are setup on the backend so growers' pages stay private from each other."
 }
 
 for question, answer in faq_content.items():
@@ -20,15 +28,23 @@ for question, answer in faq_content.items():
         st.write(answer)
 
 with data_issues.container(border = True):
-    st.write("**OpenET**: Recent data (last 120 days) is not final. CSGrowers refreshes its OpenET database every month. **[Issue Posted 3/13/2026]**")
+    st.write("**OpenET**: Recent data (last 120 days) is not final. CSGrowers refreshes its OpenET backlog daily. **[Issue Posted 3/13/2026]**")
 with data_issues.container(border = True):
-    st.write("**OpenET**: Recent FrET data has duplicate values. Issue is resolved for data older than 120 days. OpenET is aware of the issue. **[Issue Posted 3/13/2026]**")
-with data_issues.container(border = True):
-    st.write("**CAP_001**: New FLORAPULSE and Soil Sensors have been installed on 4/7/2026, data from these sensors before this date may not be accurate or complete. **[Issue Updated 4/9/2026]**")
-with data_issues.container(border = True):
-    st.write("**CAP_001**: Unstable tower connection between 1/2026 - 4/2026, data during this period may have gaps. **[Issue Updated 4/9/2026]**")
+    st.write("**OpenET**: Recent FrET and Precipitation data show repeat values. Issue is often resolved within a week or so, can take up to 120 days to resolve. OpenET is aware of the issue. **[Issue Updated 4/16/2026]**")
 with data_issues.container(border = True):
     st.write("**Bug**: Irrigation upload via CSV temporarily disabled after of overhaul of soil moisture depletion system. A more user friendly irrigation information sharing system coming soon. **[Issue Posted 4/9/2026]**")
+if email.endswith("@capayfarms.com") or any(email.endswith(domain) for domain in admin_emails):
+  with data_issues.container(border = True):
+      st.write("**CAP_IND**: New FLORAPULSE and Soil Sensors have been installed on 4/7/2026, data from these sensors before this date may not be accurate or complete. **[Issue Updated 4/9/2026]**")
+  with data_issues.container(border = True):
+      st.write("**CAP_IND**: Unstable tower connection between 1/2026 - 4/7/2026, data during this period may have gaps. **[Issue Updated 4/9/2026]**")
+  with data_issues.container(border = True):
+      st.write("**CAP_NOP**: Unable to connect to tower since 4/9/26, data is still being collected but we are not able to retreive it remotely at this time. **[Issue Posted 4/15/2026]**")
+if any(email.endswith(domain) for domain in admin_emails):
+  with data_issues.container(border = True):
+      st.write("**WIN_001**: Unable to connect to tower since 4/9/26, data is still being collected but we are not able to retreive it remotely at this time. **[Issue Posted 4/15/2026]**")
+  with data_issues.container(border = True):
+      st.write("**OAK_001**: Unable to connect to tower since 4/9/26, data is still being collected but we are not able to retreive it remotely at this time. **[Issue Posted 4/15/2026]**")
 
 st.subheader("Resources:")
 st.write("""
@@ -54,3 +70,23 @@ st.write("""
 >Melton, F., et al., 2021. OpenET: Filling a Critical Data Gap in Water Management for the Western United States. Journal of the American Water Resources Association, 2021 Nov 2. doi:10.1111/1752-1688.12956
 
 - Special thanks to Mina Swintek for feedback on content, user interface, and bug testing.""")
+
+badge_color = {
+    "feature": "green",
+    "bug fix": "red",
+    "improvement": "blue"
+}
+
+with open("changelog.json", "r") as f:
+    changelog = json.load(f)
+
+st.subheader("Changelog:")
+
+for i, release in enumerate(changelog):
+    with st.expander(f"v{release['version']} — {release['date']}"):
+        for change in release["changes"]:
+            col1, col2 = st.columns([1, 6])
+            with col1:
+                st.badge(change["type"], color=badge_color[change["type"]])
+            with col2:
+                st.markdown(change["text"])
