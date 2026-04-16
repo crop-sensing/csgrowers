@@ -28,6 +28,8 @@ The towers were set-up and are monitored primarily by Sebastian Castro-Bustamant
 
 Project funded by the Almond Board of California, ID #WATER16-Bambach
 
+Project funded by the Almond Board of California, ID #WATER16-Bambach
+
 Refernce ET provided by the California Irrigation Management Information System (CIMIS) a part of the California Department of Water Resoures, CIMIS can be accessed [here](https://cimis.water.ca.gov/Default.aspx).
 
 Satelitte ET (ETa) and Fractional ET (FrET) are provided by OpenET, based on it's paper:

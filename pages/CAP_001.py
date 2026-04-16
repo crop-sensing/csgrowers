@@ -15,7 +15,7 @@ import numpy as np
 ## Must be first line
 st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
-st.title("CSGrowers - Capay_001")
+st.title("CSGrowers - Capay Independence")
 
 origin = "streamlit" ## streamlit or local
 
@@ -23,6 +23,12 @@ site = "CAP_001"
 curr_page = "CAP_001"
 
 years_active = ["2025", "2026"]
+
+DEFAULTS = {
+    "def_fc": float(st.secrets[site]["def_fc"]),
+    "def_wilt_p": float(st.secrets[site]["def_wilt_p"]),
+    "def_mad": float(st.secrets[site]["def_mad"])
+}
 
 if origin == "streamlit":
   if "current_page" not in st.session_state:
@@ -86,15 +92,16 @@ def data_set_up():
     
     ## Irrigation
     irr_temp_new = pd.DataFrame()
-    irr_temp_new["date"] = dl_gen["TIMESTAMP"]
+    irr_temp_new["date"] = et_both["date"]
     irr_temp_new["irr"] = 0
-    irr_temp_new["precip"] = 0
+    irr_temp_new["precip"] = et_both["pr"] / 25.4
 
     try:
       ## Retrieve Saved Irrigation
       res = client.table("irrigation").select("data").eq("dataset_name", "saved_irr").eq("site", site).eq("username", email).execute()
       user_irr = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
       user_irr["date"] = pd.to_datetime(user_irr["date"], unit = "ms")
+      user_irr = pd.concat([user_irr, irr_temp_new[irr_temp_new["date"] > user_irr.date.max()]])
 
     except IndexError:
       user_irr = irr_temp_new
@@ -111,7 +118,7 @@ def data_set_up():
       res = client.table("headers").select("value").eq("data_type", "soil_panel").eq("site", site).eq("username", email).execute()
       sql_soil_panel = res.data[0]["value"]
     except:
-      sql_soil_panel = ["0.30", "0.14", "0.45"]
+      sql_soil_panel = ["0.23", "0.11", "0.45"]
     
     ## Gets last week, filters et data
     today = pd.Timestamp.today().normalize()
@@ -124,15 +131,9 @@ def data_set_up():
 
 et_both, dl_gen, dl_soil_all, dl_flo, user_irr, template, depths, et_last_week, sql_crop_coeff, sql_soil_panel, default_val = data_set_up()
 
-DEFAULTS = {
-    "def_fc": 0.23,
-    "def_wilt_p": 0.11,
-    "def_mad": 0.45
-}
-
 ## Checks column names, time values, and amount of rows in a data frame.
 ## Returns specific error codes if user df fails test.
-def user_upload_check(df, cols = ["Date", "Irrigation", "Precipitation"]):
+def user_upload_check(df, cols = ["Date", "Irrigation (in)", "Precipitation (in)"]):
   checks = 1
   codes = []
   cols = set(cols)
@@ -140,7 +141,7 @@ def user_upload_check(df, cols = ["Date", "Irrigation", "Precipitation"]):
     checks -= 1
     codes.append("Your columns do not match the template.")
   try:
-    df["Irrigation"] = df["Irrigation"].apply(pd.to_numeric)
+    df["Irrigation (in)"] = df["Irrigation (in)"].apply(pd.to_numeric)
   except:
     codes.append("There is an invalid data type in your dataset.")
     checks -= 1
@@ -157,7 +158,7 @@ def supabase_upload(df, site = site, username = email, template = template):
     df_merged = df_dates.combine_first(df_data)
     df_merged = df_merged.fillna(0).reset_index()
     
-    df_merged = df_merged[["date", "Irrigation", "Precipitation"]].rename(columns={"Irrigation": "irr", "Precipitation": "precip"})
+    df_merged = df_merged[["date", "Irrigation (in)", "Precipitation (in)"]].rename(columns={"Irrigation (in)": "irr", "Precipitation (in)": "precip"})
     json_data = json.loads(df_merged.to_json())
     client.table("irrigation").upsert({
           "dataset_name": "saved_irr",
@@ -251,7 +252,7 @@ tileurl = 'https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_
 with col1.container(border = True, height = 290):
   m = fl.Map()
   m = fl.Map(location=[float(st.secrets[site]["center_lat"]), float(st.secrets[site]["center_long"])], zoom_start = 13, tiles = tileurl, attr = "Mapbox", scrollWheelZoom = False, height = 290)
-  fl.Marker(location = [float(st.secrets[site]["true_lat"]), float(st.secrets[site]["true_long"])], popup = "CAP_002").add_to(m)
+  fl.Marker(location = [float(st.secrets[site]["true_lat"]), float(st.secrets[site]["true_long"])], popup = site).add_to(m)
   st_folium(m, height = 230, returned_objects=[])
 
 ## Either saves crop coeff to supabase or returns empty WIP
@@ -429,11 +430,13 @@ irr_tab, et_tab, soil_tab, wp_tab, weather_tab = st.tabs(["Irrigation", "Evapotr
 # irr_year = irr_tab.radio("Year:", years_active, horizontal = True)
 ## Irrigation data editor/button initilization
 user_file = None
-app_df = irr_tab.data_editor(user_irr.rename(columns = {"date": "Date", "irr": "Irrigation", "precip": "Precipitation"}),
+user_irr["irr"] = user_irr["irr"].astype(float)
+user_irr["precip"] = user_irr["precip"].astype(float)
+app_df = irr_tab.data_editor(user_irr.rename(columns = {"date": "Date", "irr": "Irrigation (in)", "precip": "Precipitation (in)"}),
                              column_config = {
                                "Date": st.column_config.DateColumn(),
-                               "Irrigation": st.column_config.NumberColumn(min_value = 0, max_value = 100),
-                               "Precipitation": st.column_config.NumberColumn(min_value = 0, max_value = 10)
+                               "Irrigation (in)": st.column_config.NumberColumn(min_value = 0, max_value = 10, step = .001, format = "%.3f"),
+                               "Precipitation (in)": st.column_config.NumberColumn(min_value = 0, max_value = 10, step = .001, format = "%.3f")
                              },
                              hide_index = True,
                              disabled = ["Date"])
@@ -448,7 +451,6 @@ app_df = irr_tab.data_editor(user_irr.rename(columns = {"date": "Date", "irr": "
 
 # if user_file is not None:
 #   if st.session_state.get("last_uploaded_file") != user_file.name:
-#     st.session_state["last_uploaded_file"] = user_file.name
 #     user_df = pd.read_csv(user_file, index_col = [0])
 #     file_check, codes = user_upload_check(user_df)
 #     if file_check == True:
@@ -491,7 +493,8 @@ soil_tab.dataframe(dl_soil_all.rename(columns = {"TIMESTAMP": "Date"}), hide_ind
 
 ## Water Potential Data Frame that uses earlier functions to check data upon save.
 app_wp = wp_tab.data_editor(dl_flo.rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP_mean", "WP_std", "WP_min", "WP_max"], hide_index = True,
-                 column_config={"Date": st.column_config.DateColumn()})
+                 column_config={"Date": st.column_config.DateColumn(),
+                                "Precipitation (in)": st.column_config.NumberColumn(min_value = -20, max_value = 10, step = .001, format = "%.3f")})
 if wp_tab.button("Save Pressure Bomb Data"):
   if pb_check(app_wp) == "Fail":
     wp_tab.error("Upload Failed Check Inputs")
@@ -510,7 +513,7 @@ bottom_margin = 0
 def irr_vis(irr = app_df):
   irr_plot = go.Figure()
 
-  irr_plot.add_trace(go.Bar(x = pd.to_datetime(irr["Date"]), y = irr["Irrigation"], name = "Irrigation (in)", showlegend = True))
+  irr_plot.add_trace(go.Bar(x = pd.to_datetime(irr["Date"]), y = irr["Irrigation (in)"], name = "Irrigation (in)", showlegend = True))
   irr_plot.update_layout(
     margin = dict(t = 0, b = bottom_margin, r = 150),
     yaxis_title = "Irrigation Applied (in)"
@@ -656,25 +659,49 @@ st.write("")
 text_col1, text_col2, text_col3, text_col4, text_col5, text_col6, text_col7 = st.columns(7)
 info_col1, info_col2, info_col3, info_col4, info_col5, info_col6 = st.columns(6)
 
-@st.dialog("Tutorial", width = "large")
-def show_tutorial():
-    st.subheader("Introduction")
-    st.write("The CSGrowers App is a pilot program developed to give growers a dashboard to view nearly live data and the ability to save irrigation data, pressure bomb data, and customizations to data and data visualizatoins.")
-    st.write("The following tutorial will give you the basics on how to interface with this app. For more information on our methods of gathering, manipulating, and storing data visit the [GitHub Repository](https://github.com/crop-sensing/csgrowers)" \
-    " for CSGrowers.")
-    st.subheader("Overview")
-    st.write("The CSGrowers dashboard consists of three main components: data summary/target setting, data tables, and data visualizations. " \
-    "The targets and inputs you give in the first two components affect the data tables and visualizations. " \
-    "Along with these three main parts, we also allow you to select the date range of data you would like to view. " \
-    "All together, these can give you a versatile experience to view and manipulate your data.")
-    st.subheader("Data Summary / Target Setting")
-    st.write("At the top of the page you will see five columns of containers: a map, ETo data/crop coefficient customizer, ETa/FrET, Soil Mostiure Depletion/Target setting, and the box that contains general information. "\
-      "The map displays a marker of the where the tower is at the site you are currently viewing. The ETo box shows summary data from the last seven days of ETo data from CIMIS (see credits for more information), " \
-      "an input for a custom crop coefficient if you choose (or you can use our standard value), and there is an updated ETo value based on this coefficient. "\
-      "This coefficient will also update the ETo values you see on the rest of the app. If you choose to use a custom crop coefficient, you can save it to the cloud and it will be loaded automatically next time you sign into the app. " \
-      "The ETa/FrET boxes work indentically to the ETo box, but they display ETa and FrET from OpenET (for more information see glossary). "\
-      "The Soil Moisture Depletion box functions similarly to the ETo box, where there is the soil depletion for the last week is displayed. "\
-      "You can set, save, and load a custom soil mositure target with the buttons above the input box.")
+with open("tutorial.json", "r") as f:
+    slide_content = json.load(f)
+
+@st.dialog("Tutorial", width="large")
+def tutorial_dialog():
+    if "slide" not in st.session_state:
+        st.session_state.slide = 0
+
+    def next_slide():
+        st.session_state.slide += 1
+
+    def back_slide():
+        st.session_state.slide -= 1
+
+    def reset_slide():
+        st.session_state.slide = 0
+
+    slide = slide_content[st.session_state.slide]
+    total = len(slide_content)
+    current = st.session_state.slide
+
+    st.markdown(f"### {slide['title']}")
+    if "image" in slide:
+      st.image(slide["image"])
+    st.write(slide["content"])
+    st.progress((current + 1) / total)
+    st.caption(f"Step {current + 1} of {total}")
+    st.divider()
+
+    col1, col2, col3 = st.columns([1, 5, 1])
+
+    with col1:
+        if current > 0:
+            st.button("← Back", on_click=back_slide)
+
+    with col3:
+        if current < total - 1:
+            st.button("Next →", on_click=next_slide)
+        else:
+            if st.button("✅ Done"):
+                reset_slide()
+                st.rerun()
+
 @st.dialog("Glossary")
 def show_glossary():
     st.write("**ET**: Evapotranspiration")
@@ -693,6 +720,8 @@ def show_glossary():
   ## Shows tutorial/credits on click
 
 if info_col3.button("Get Started", use_container_width=True):
-  show_tutorial()
+    st.session_state.next_clicked = 0
+    st.session_state.slide = 0  # always start from slide 1
+    tutorial_dialog()
 if info_col4.button("Glossary", use_container_width=True):
   show_glossary()

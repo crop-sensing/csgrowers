@@ -1,0 +1,46 @@
+[
+    {
+        "title": "Welcome to CSGrowers!",
+        "content": "This tutorial will walk you through the basics on how use CSGrowers.",
+        "image": "pictures/csg_tut_1.png"
+    },
+    {
+        "title": "Viewing Your Site and Block",
+        "content": "Your site will appear here, the marker represents exactly where we have our tower in your field. You can zoom in to precisely view what block's data you are currently viewing.",
+        "image": "pictures/csg_tut_2.png"
+    },
+    {
+        "title": "Evapotranspiration Summary Data",
+        "content": "Highlighted here, is your summary data for Evapotranspiration (ET) over the last seven days. You are seeing the sum of the average daily ET. You can set and save a crop coefficient to be applied to the reference ET (ETo) which will update the Crop ET (ETc) for the rest of the app.",
+        "image": "pictures/csg_tut_3.png"
+    },
+    {
+        "title": "Soil Moisture Summary Data",
+        "content": "In this container, you can see Root Zone Depletion (RZD), Total Available Water (TAW), and Readily Available Water (RAW) over Management Allowed Depletion (MAD). You can click on 'Soil Moisture Panel' to edit some of the input variables. [NOTE 4/16/2026]: The data and irrigation recommendation may be inaccurate due to ongoing adjustments to calculation and incomplete irrigation data.",
+        "image": "pictures/csg_tut_4.png"
+    },
+    {
+        "title": "Soil Moisture Panel",
+        "content": "CSGrowers has researched and developed default Field Capacity, Wilting Point, and Depletion Fraction which will calculate RZD, TAW, and RAW by default. However, if you would like to adjust these values, you have the ability to. When you click save, your desired values will be saved for future visits to CSGrowers. If you ever change your mind, you can reset the values to the ones we have selected.",
+        "image": "pictures/csg_tut_5.png"
+    },
+    {
+        "title": "Date Range",
+        "content": "Now we move to the bottom part of CSGrowers. You can change the date range of data that is displayed to you on CSGrowers. It will be reflected in the table and data visualizations below the Start/End Date boxes. This will not affect how irrigation/precipitation/pressure bomb data is saved (more on this later). And will not affect the summary data displayed at the top of the page.",
+        "image": "pictures/csg_tut_6.png"
+    },
+    {
+        "title": "Tables and Tabs",
+        "content": "Below the date selection, you will see five tabs, a table, and a data visualization underneath the table. When you click on a tab, the relevant data will populate the table and a data visualization will load in underneath the table. Tip: You can download data from the table in the selected time frame by clicking the arrow pointed down, which will appear when you hover on the table.",
+        "image": "pictures/csg_tut_7.png"
+    },
+    {
+        "title": "Data Input",
+        "content": "The final important feature is the ability to input irrigation, precipitation, and pressure bomb data (this can be found in the 'Water Potential' tab). When you input irrigation data, it will automatically update the graph right below it. You can save the irrigation data with the 'Download and Save' button, this will update the soil moisture calculations and will save your irrigation data for next time you use CSGrowers. [NOTE 4/16/26]: There is a feature being revamped to allow users to upload excel/csv files to CSGrowers to update their irrigation information. Hopefully it will be functional again within the next few weeks.",
+        "image": "pictures/csg_tut_8.png"
+    },
+    {
+        "title": "Done!",
+        "content": "This is the end of the CSGrowers Tutorial! If you have additional questions consult the FAQ, Known Issues, and Resources areas on the homepage."
+    }
+]
