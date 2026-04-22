@@ -8,7 +8,7 @@ if st.button("Log Out"):
 
 email = st.user.email
 
-admin_emails = ["@ucdavis.edu", "@usda.gov"]
+admin_emails = ["@ucdavis.edu", "@usda.gov", "kyleknipper7@gmail.com"]
 
 st.sidebar.subheader("Use the navigational sidebar to select your desired site.")
 st.write("")
