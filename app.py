@@ -3,7 +3,7 @@ import streamlit as st
 origin = "streamlit"
 
 st.set_page_config(initial_sidebar_state="expanded")
-admin_domains = ["@ucdavis.edu", "@usda.gov"]
+admin_domains = ["@ucdavis.edu", "@usda.gov", "kyleknipper7@gmail.com"]
 
 def get_authorized_pages():
     user = st.user
