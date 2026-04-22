@@ -39,12 +39,12 @@ if email.endswith("@capayfarms.com") or any(email.endswith(domain) for domain in
   with data_issues.container(border = True):
       st.write("**CAP_IND**: Unstable tower connection between 1/2026 - 4/7/2026, data during this period may have gaps. **[Issue Updated 4/9/2026]**")
   with data_issues.container(border = True):
-      st.write("**CAP_NOP**: Unable to connect to tower since 4/9/26, data is still being collected but we are not able to retreive it remotely at this time. **[Issue Posted 4/15/2026]**")
+      st.write("**CAP_NOP**: Connection to tower re-established on 4/22, there is a data gap between 4/9 and 4/13 on from our Datalogger data, card data is stable and intact. **[Issue Updated 4/22/2026]**")
 if any(email.endswith(domain) for domain in admin_emails):
   with data_issues.container(border = True):
-      st.write("**WIN_001**: Unable to connect to tower since 4/9/26, data is still being collected but we are not able to retreive it remotely at this time. **[Issue Posted 4/15/2026]**")
+      st.write("**WIN_001**: Connection to tower re-established on 4/22, there is a data gap between 4/9 and 4/13 on from our Datalogger data, card data is stable and intact. **[Issue Updated 4/22/2026]**")
   with data_issues.container(border = True):
-      st.write("**OAK_001**: Unable to connect to tower since 4/9/26, data is still being collected but we are not able to retreive it remotely at this time. **[Issue Posted 4/15/2026]**")
+      st.write("**OAK_001**: Connection to tower re-established on 4/22, there is a data gap between 4/9 and 4/21 on from our Datalogger data, card data is stable and intact. **[Issue Updated 4/22/2026]**")
 
 st.subheader("Resources:")
 st.write("""
