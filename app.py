@@ -6,8 +6,10 @@ st.set_page_config(initial_sidebar_state="expanded")
 admin_domains = ["@ucdavis.edu", "@usda.gov", "kyleknipper7@gmail.com"]
 
 def get_authorized_pages():
-    user = st.user
-
+    try:
+      user = st.user
+    except Exception:
+        return [st.Page("pages/login.py", title="Login")]
     if not user.is_logged_in:
         return [st.Page("pages/login.py", title="Login")]
 
