@@ -37,6 +37,8 @@ if email.endswith("@capayfarms.com") or any(email.endswith(domain) for domain in
   with data_issues.container(border = True):
       st.write("**CAP_IND**: New FLORAPULSE and Soil Sensors have been installed on 4/7/2026, data from these sensors before this date may not be accurate or complete. **[Issue Updated 4/9/2026]**")
   with data_issues.container(border = True):
+      st.write("**CAP_IND**: Water Potential data before April 2026 has been removed from Capay Independence due to low data quality. **[Issue Added 5/6/26]**")
+  with data_issues.container(border = True):
       st.write("**CAP_IND**: Unstable tower connection between 1/2026 - 4/7/2026, data during this period may have gaps. **[Issue Updated 4/9/2026]**")
   with data_issues.container(border = True):
       st.write("**CAP_NOP**: Connection to tower re-established on 4/22, there is a data gap between 4/9 and 4/13 on from our Datalogger data, card data is stable and intact. **[Issue Updated 4/22/2026]**")

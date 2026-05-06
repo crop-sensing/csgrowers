@@ -588,6 +588,8 @@ soil_tab.plotly_chart(heat_map())
 
 ## Water Potential visualization
 def water_potential(wp = dl_flo, dl_gen = dl_gen):
+  wp = wp[wp['TIMESTAMP'] >= pd.to_datetime('2026-04-01')]
+  dl_gen = dl_gen[dl_gen['TIMESTAMP'] >= pd.to_datetime('2026-04-01')]
   wp_plot = go.Figure()
   wp["WP_high"] = wp["WP_mean"] + wp["WP_std"]
   wp["WP_low"] = wp["WP_mean"] - wp["WP_std"]
@@ -598,11 +600,14 @@ def water_potential(wp = dl_flo, dl_gen = dl_gen):
   wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_high"], fill = "tonexty", line=dict(width=0), fillcolor="rgba(26, 111, 175, 0.42)", showlegend=False, name = "Obs. + 1 SD"))
   wp_plot.add_trace(go.Scatter(x = wp["TIMESTAMP"], y = wp["WP_mean"], mode = "lines", line=dict(color="#1a6faf", width=2), name = "Observed WP"))
   wp_plot.add_trace(go.Scatter(x = dl_gen["TIMESTAMP"], y = (((dl_gen["VPD"]*-0.12)-0.41)*10), line=dict(color="#e07b39", width=2), mode = "lines", name = "Baseline WP"))
+  
+  wp_plot.update_traces(connectgaps = False)
 
   wp_plot.update_layout(
     yaxis_title = "Water Potential (Bar)",
     hovermode = "x unified",
-    margin = dict(t = 0, b = bottom_margin)
+    margin = dict(t = 0, b = bottom_margin),
+    yaxis_range = [-20, 1]
   )
 
   # wp_plot.update_xaxes(
