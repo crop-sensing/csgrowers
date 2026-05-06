@@ -1,5 +1,12 @@
 [
     {
+        "version": "1.0.1",
+        "date": "2026-05-06",
+        "changes": [
+            {"type": "bug fix", "text": "Implemented back-end fix to prevent latency in data, specifically in regards to Water Potential."}
+        ]
+    },
+    {
         "version": "1.0.0",
         "date": "2026-04-16",
         "changes": [
