@@ -6,6 +6,3 @@ secondaryBackgroundColor = "#262730"
 textColor = "#FAFAFA"
 font = "sans serif"
 
-[server]
-cookieSameSite = "none"
-cookieSecure = true
