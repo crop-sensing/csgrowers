@@ -1,5 +1,17 @@
 [
     {
+        "version": "1.1.0",
+        "date": "2026-06-23",
+        "changes": [
+            {"type": "feature", "text": "New and improved irrigation data upload interface. Added dynamic menus to select target date and irrigation columns and added unit detection."},
+            {"type": "improvement", "text": "Put data visualizations on top of data tables and tweaked certain graphs for greater clarity."},
+            {"type": "improvement", "text": "Switched precipitation data source from OpenET to California Department of Water Resources."},
+            {"type": "improvement", "text": "Added default Crop Coefficient for each month on the year (almonds only at the moment)."},
+            {"type": "improvement", "text": "Rolling start date and end date windows. Data tables show most recent data on top."},
+            {"type": "bug fix", "text": "Fixed statistical and coding errors in RZD, TAW, and RAW calculations."}
+        ]
+    },
+    {
         "version": "1.0.1",
         "date": "2026-05-06",
         "changes": [

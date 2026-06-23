@@ -4,3 +4,6 @@ supabase_updater.py
 cimis_updater.py
 openet_updater.py
 monthly_et.py
+pages/CAP_test.py
+pages/OAK_test.py
+water_resources_pull.py
