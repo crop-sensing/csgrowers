@@ -18,15 +18,16 @@ def get_authorized_pages():
 
     pages.append(st.Page("pages/homepage.py", title="Home", icon="🏠"))
 
-    if any(email.endswith(domain) for domain in admin_domains):
+    if any(email.endswith(domain) for domain in st.secrets["emails"]["capay"]):
+        pages.append(st.Page("pages/CAP_001.py", title="Capay - Independence", icon="🌳"))
+        pages.append(st.Page("pages/CAP_002.py", title="Capay - Nonpareil", icon="🌳"))
+    elif any(email.endswith(domain) for domain in st.secrets["emails"]["oakville"]):
+        pages.append(st.Page("pages/OAK_001.py", title="OAK_001", icon="🍇"))
+    elif any(email.endswith(domain) for domain in admin_domains):
         pages.append(st.Page("pages/CAP_001.py", title="Capay - Independence", icon="🌳"))
         pages.append(st.Page("pages/CAP_002.py", title="Capay - Nonpareil", icon="🌳"))
         pages.append(st.Page("pages/OAK_001.py", title="OAK_001", icon="🍇"))
         pages.append(st.Page("pages/WIN_001.py", title="WIN_001", icon="🌳"))
-
-    elif any(email.endswith(domain) for domain in st.secrets["emails"]["capay"]):
-        pages.append(st.Page("pages/CAP_001.py", title="Capay - Independence", icon="🌳"))
-        pages.append(st.Page("pages/CAP_002.py", title="Capay - Nonpareil", icon="🌳"))
 
     return pages
 
@@ -34,5 +35,5 @@ def get_authorized_pages():
 if origin == "streamlit":
   pg = st.navigation(get_authorized_pages(), position="sidebar", expanded=True)
 else:
-  pg = st.navigation([st.Page("pages/homepage.py"), st.Page("pages/CAP_001.py", title = "Capay - Independence"), st.Page("pages/CAP_002.py", title = "Capay - Nonpareil")])
+  pg = st.navigation([st.Page("pages/homepage.py"), st.Page("pages/CAP_test.py", title="CAP_Test"), st.Page("pages/CHW_001.py"), st.Page("pages/GLE_001.py"), st.Page("pages/BAR_002.py"), st.Page("pages/OAK_test.py")])
 pg.run()

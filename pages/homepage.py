@@ -7,6 +7,7 @@ if st.button("Log Out"):
     st.logout()
 
 email = st.user.email
+# email = "cpetrosi"
 
 admin_emails = ["@ucdavis.edu", "@usda.gov", "kyleknipper7@gmail.com"]
 
@@ -17,7 +18,7 @@ st.subheader("General Information:")
 faq, data_issues = st.tabs(["FAQ", "Known Issues"])
 
 faq_content = {
-    "What is the latency of your data?": """Our database refreshes at about 9:30am (PT) daily. Expect incoming data to be a day behind, if the data begins to lag behind check the 'Known Issues' tab for more information.""",
+    "What is the latency of your data?": """Our app updates itself throughout the day. Tower data is collected locally daily and is added within an hour of collection. Evapotranspiration data has a latency of a day.""",
     "How far back does your data go?": "As of March 2026, the sites that are a part of our pilot project have towers that were set up in the summer of 2025. August 1st was about the time that all towers were online and had their intitial issues resolved. OpenET and CIMIS have an older database, but we only display data from these resources for days correspond with tower data.",
     "Can I download the data I see on your website?": "Yes! If you hover over your desired table, click the down arrow to download the current table.",
     "Who can view the pages for my site?": "CSGrowers team members (certain Crop Sensing Group members, including UC Davis and USDA employees) and you, the grower, are currently the only ones who have access to your orchard's page(s), data, and known issues specific to your site. We are using Google's OAuth service to whitelist specific users to allow them to access this app and further permissions are setup on the backend so growers' pages stay private from each other."
@@ -30,23 +31,14 @@ for question, answer in faq_content.items():
 with data_issues.container(border = True):
     st.write("**OpenET**: Recent data (last 120 days) is not final. CSGrowers refreshes its OpenET backlog daily. **[Issue Posted 3/13/2026]**")
 with data_issues.container(border = True):
-    st.write("**OpenET**: Recent FrET and Precipitation data show repeat values. Issue is often resolved within a week or so, can take up to 120 days to resolve. OpenET is aware of the issue. **[Issue Updated 4/16/2026]**")
+    st.write("**OpenET**: Recent FrET data show repeat values. Issue is often resolved within a week or so, can take up to 120 days to resolve. OpenET is aware of the issue. **[Issue Updated 6/23/2026]**")
 with data_issues.container(border = True):
-    st.write("**Bug**: Irrigation upload via CSV temporarily disabled after of overhaul of soil moisture depletion system. A more user friendly irrigation information sharing system coming soon. **[Issue Posted 4/9/2026]**")
+    st.write("**All Towers**: There is a data gap of of 1-2 weeks in early April 2026. This has produced some visual bugs in some graphs during this time. **[Issue Updated 6/23/2026]**")
 if email.endswith("@capayfarms.com") or any(email.endswith(domain) for domain in admin_emails):
   with data_issues.container(border = True):
       st.write("**CAP_IND**: New FLORAPULSE and Soil Sensors have been installed on 4/7/2026, data from these sensors before this date may not be accurate or complete. **[Issue Updated 4/9/2026]**")
   with data_issues.container(border = True):
       st.write("**CAP_IND**: Water Potential data before April 2026 has been removed from Capay Independence due to low data quality. **[Issue Added 5/6/26]**")
-  with data_issues.container(border = True):
-      st.write("**CAP_IND**: Unstable tower connection between 1/2026 - 4/7/2026, data during this period may have gaps. **[Issue Updated 4/9/2026]**")
-  with data_issues.container(border = True):
-      st.write("**CAP_NOP**: Connection to tower re-established on 4/22, there is a data gap between 4/9 and 4/13 on from our Datalogger data, card data is stable and intact. **[Issue Updated 4/22/2026]**")
-if any(email.endswith(domain) for domain in admin_emails):
-  with data_issues.container(border = True):
-      st.write("**WIN_001**: Connection to tower re-established on 4/22, there is a data gap between 4/9 and 4/13 on from our Datalogger data, card data is stable and intact. **[Issue Updated 4/22/2026]**")
-  with data_issues.container(border = True):
-      st.write("**OAK_001**: Connection to tower re-established on 4/22, there is a data gap between 4/9 and 4/21 on from our Datalogger data, card data is stable and intact. **[Issue Updated 4/22/2026]**")
 
 st.subheader("Resources:")
 st.write("""
@@ -70,6 +62,8 @@ st.write("""
 
 - Satelitte ET (ETa) and Fractional ET (FrET) are provided by OpenET, based on it's paper:
 >Melton, F., et al., 2021. OpenET: Filling a Critical Data Gap in Water Management for the Western United States. Journal of the American Water Resources Association, 2021 Nov 2. doi:10.1111/1752-1688.12956
+         
+- Precipitation data collected from the California Department of Water Resources via the California Data Exchange Center.
 
 - Special thanks to Mina Swintek for feedback on content, user interface, and bug testing.""")
 
