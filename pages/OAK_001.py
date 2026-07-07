@@ -17,7 +17,7 @@ import time
 ## Must be first line
 st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
-st.title("CSGrowers - Oakville Test")
+st.title("CSGrowers - Oakville")
 
 origin = "streamlit" ## streamlit or local
 

@@ -28,6 +28,8 @@ def get_authorized_pages():
         pages.append(st.Page("pages/CAP_002.py", title="Capay - Nonpareil", icon="🌳"))
         pages.append(st.Page("pages/OAK_001.py", title="OAK_001", icon="🍇"))
         pages.append(st.Page("pages/WIN_001.py", title="WIN_001", icon="🌳"))
+        pages.append(st.Page("pages/GLE_001.py", title="GLE_001", icon="🌳"))
+        pages.append(st.Page("pages/CHW_001.py", title="CHW_001", icon="🌳"))
 
     return pages
 

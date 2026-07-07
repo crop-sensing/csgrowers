@@ -7,7 +7,7 @@ if st.button("Log Out"):
     st.logout()
 
 email = st.user.email
-# email = "cpetrosi"
+
 
 admin_emails = ["@ucdavis.edu", "@usda.gov", "kyleknipper7@gmail.com"]
 
