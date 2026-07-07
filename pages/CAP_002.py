@@ -11,6 +11,8 @@ import json
 from supabase import create_client
 from io import StringIO
 import numpy as np
+import re
+import time
 
 ## Must be first line
 st.set_page_config(layout = "wide")
@@ -19,8 +21,8 @@ st.title("CSGrowers - Capay Nonpareil")
 
 origin = "streamlit" ## streamlit or local
 
-site = "CAP_002"
-curr_page = "CAP_002"
+site = "CAP_001"
+curr_page = "CAP_001"
 
 years_active = ["2025", "2026"]
 
@@ -29,6 +31,21 @@ DEFAULTS = {
     "def_wilt_p": float(st.secrets[site]["def_wilt_p"]),
     "def_mad": float(st.secrets[site]["def_mad"])
 }
+
+et_dict = {
+         1: 0.4,
+         2: 0.41,
+         3: 0.62,
+         4: 0.8,
+         5: 0.94,
+         6: 1.05,
+         7: 1.11,
+         8: 1.11,
+         9: 1.06,
+         10: 0.92,
+         11: 0.69,
+         12: 0.43
+      }
 
 if origin == "streamlit":
   if "current_page" not in st.session_state:
@@ -70,6 +87,10 @@ def data_set_up():
     dl_gen["TIMESTAMP"] = pd.to_datetime(dl_gen["TIMESTAMP"], unit = "ms")
 
     ## DL Water Potential Import
+    res = client.table("water_potential").select("data").eq("dataset_name", "wp_hourly").eq("site", site).eq("username", "ALL").execute()
+    dl_flo_hourly = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
+    dl_flo_hourly["TIMESTAMP"] = pd.to_datetime(dl_flo_hourly["TIMESTAMP"], unit = "ms")
+
     res = client.table("water_potential").select("data").eq("dataset_name", "wp").eq("site", site).eq("username", "ALL").execute()
     dl_flo = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
     dl_flo["TIMESTAMP"] = pd.to_datetime(dl_gen["TIMESTAMP"], unit = "ms")
@@ -111,7 +132,7 @@ def data_set_up():
       res = client.table("headers").select("value").eq("data_type", "crop_coeff").eq("site", site).eq("username", email).execute()
       sql_crop_coeff = str(res.data[0]["value"][0])
     except:
-      sql_crop_coeff = 1
+      sql_crop_coeff = et_dict[datetime.datetime.today().month]
     
     ## Retrieve Soil Panel
     try:
@@ -127,9 +148,9 @@ def data_set_up():
     start_date = last_sunday - pd.Timedelta(days=6)
     et_last_week = et_both[(et_both['date'] >= start_date) & (et_both['date'] < last_sunday)]
 
-    return et_both, dl_gen, dl_soil_all, dl_flo, user_irr, irr_temp_new, depths, et_last_week, sql_crop_coeff, sql_soil_panel, ""
+    return et_both, dl_gen, dl_soil_all, dl_flo, user_irr, irr_temp_new, depths, et_last_week, sql_crop_coeff, sql_soil_panel, "", dl_flo_hourly
 
-et_both, dl_gen, dl_soil_all, dl_flo, user_irr, template, depths, et_last_week, sql_crop_coeff, sql_soil_panel, default_val = data_set_up()
+et_both, dl_gen, dl_soil_all, dl_flo, user_irr, template, depths, et_last_week, sql_crop_coeff, sql_soil_panel, default_val, dl_flo_hourly = data_set_up()
 
 ## Checks column names, time values, and amount of rows in a data frame.
 ## Returns specific error codes if user df fails test.
@@ -152,13 +173,17 @@ def user_upload_check(df, cols = ["Date", "Irrigation (in)", "Precipitation (in)
 
 ## Uploads irrigation data to proper database
 def supabase_upload(df, site = site, username = email, template = template):
+    ## Takes user df and standardizes names
+    df = df.rename(columns = {"Date": "date", "Irrigation (in)": "irr", "Precipitation (in)": "preip", "irrigation": "irr", "pr": "precip"})
     df_dates = template.set_index("date")
-    df_data = df.set_index("Date")
+    df_data = df.set_index("date")
+    ## Replaces template 0s with NAs to make it easier for next line
     df_dates = df_dates.replace(0, pd.NA)
+    ## Merges template and user irrigation dfs, user data gets priority
     df_merged = df_dates.combine_first(df_data)
+    ## Replaces NAs with 0s (so that when the df is loaded back water balance eq can run)
     df_merged = df_merged.fillna(0).reset_index()
-    
-    df_merged = df_merged[["date", "Irrigation (in)", "Precipitation (in)"]].rename(columns={"Irrigation (in)": "irr", "Precipitation (in)": "precip"})
+    df_merged = df_merged[["date", "irr", "precip"]]
     json_data = json.loads(df_merged.to_json())
     client.table("irrigation").upsert({
           "dataset_name": "saved_irr",
@@ -166,6 +191,7 @@ def supabase_upload(df, site = site, username = email, template = template):
           "site": site,
           "username": username,
     }, on_conflict="dataset_name,site,username").execute()
+    ## Rerun app and requery supabase upon reload
     st.cache_data.clear()
     st.rerun()
     return None
@@ -218,6 +244,7 @@ def compute_storage(df: pd.DataFrame, rz_mm: float) -> pd.Series:
     thick = layer_thickness_in_rz(rz_mm)
     swc_cols = [f"SWC_{d}cm" for d in SENSOR_DEPTHS_CM]
     df[swc_cols] = df[swc_cols].ffill()  # carry last known reading forward
+    df[swc_cols] = df[swc_cols] / 100.0
     storage = (df[swc_cols].values * thick).sum(axis=1)
     return pd.Series(storage, index=df.index, name="Storage_mm")
 
@@ -230,7 +257,7 @@ def water_balance(df: pd.DataFrame, fc: float, wp: float,
 
     df = df.copy()
     df["Storage_mm"] = compute_storage(df, rz_mm)
-    df["dStorage_mm"] = df["Storage_mm"].shift(1) - df["Storage_mm"]
+    df["dStorage_mm"] = df["Storage_mm"] - df["Storage_mm"].shift(1)
     df["WB_depl_mm"]  = df["eta"] - df["irr"]*25.4 - df["precip"]*25.4
 
     # FAO-56 Dr tracking – initialise from first sensor reading
@@ -283,7 +310,7 @@ with col3.container(border = True, height = 290):
     st.session_state["crop_coeff"] = sql_crop_coeff
   button_col1, button_col2 = st.columns(2)
   if button_col1.button("Reset Value", width = "stretch"):
-    st.session_state["crop_coeff"] = "1"
+    st.session_state["crop_coeff"] = et_dict[datetime.datetime.today().month]
   if button_col2.button("Save Value", width = "stretch"):
     if crop_coeff_check(st.session_state["user_cc"]) == "success":
       st.success("Save Successful")
@@ -379,7 +406,7 @@ with col4.container(border = True, height = 290):
     wb_results = water_balance(soil_calc_df, fc=sm_result["fc"], wp=sm_result["wilt_p"],
                                                                     rz_cm=100, mad=sm_result["mad"])
     last = wb_results.iloc[-7:-1]
-    
+  
     dr_val  = float(last["Dr_mm"].mean() / 25.4)
     taw_val = float(last["TAW_mm"].iloc[0] / 25.4)
     raw_val = float(last["RAW_mm"].iloc[0] / 25.4)
@@ -393,23 +420,22 @@ with col4.container(border = True, height = 290):
     dr_val  = float(last["Dr_mm"].mean() / 25.4)
     taw_val = float(last["TAW_mm"].iloc[0] / 25.4)
     raw_val = float(last["RAW_mm"].iloc[0] / 25.4)
-  dr_color = "inverse" if np.sum(dr_val) > np.sum(raw_mm) else "normal"
+  dr_color = "inverse" if np.sum(dr_val) > np.sum(raw_val) else "normal"
   r1, r2, r3 = st.columns(3)
   r1.metric("RZD (in)", f"{np.sum(dr_val):.1f}", width = "content",
       delta=f"{'Above' if dr_val > raw_val else 'Below'} RAW", delta_color=dr_color)
   r2.metric("TAW (in)", f"{taw_val:.1f}", width = "content")
-  r3.metric("RAW / MAD (in)", f"{np.sum(raw_val):.1f}", width = "content")
+  r3.metric("RAW (in)", f"{np.sum(raw_val):.1f}", width = "content")
   status_emoji = {"Irrigate": "🔴", "Monitor": "🟡", "Adequate": "🟢"}
-  st.metric("Latest Status", f"{status_emoji[status(np.sum(dr_val), np.sum(raw_mm))]} {status(np.sum(dr_val), np.sum(raw_mm))}")
-
+  st.metric("Latest Status", f"{status_emoji[status(np.sum(dr_val), np.sum(raw_val))]} {status(np.sum(dr_val), np.sum(raw_val))}")
   
 date1, date2 = st.columns(2)
-date_start = date1.date_input("Start Date", value = datetime.date(int(datetime.date.today().strftime("%Y")), 1, 1))
+date_start = date1.date_input("Start Date", value = datetime.date.today()-datetime.timedelta(days=30))
 date_end = date2.date_input("End Date", value = datetime.date.today())
 
 ## Function that does the filtering
 def time_restrict(date_start = date_start, date_end = date_end,
-                  et_both = et_both, dl_soil_all = dl_soil_all, dl_flo = dl_flo, dl_gen = dl_gen, user_irr = user_irr):
+                  et_both = et_both, dl_soil_all = dl_soil_all, dl_flo = dl_flo, dl_gen = dl_gen, user_irr = user_irr, dl_flo_hourly = dl_flo_hourly):
   start = pd.to_datetime(date_start)
   end = pd.to_datetime(date_end)
   et_both = et_both[(et_both["date"] >= start) & (et_both["date"] <= end)]
@@ -418,102 +444,24 @@ def time_restrict(date_start = date_start, date_end = date_end,
   et_both["etof"] = et_both["etof"]/25.4
   dl_soil_all = dl_soil_all[(dl_soil_all["TIMESTAMP"] >= start) & (dl_soil_all["TIMESTAMP"] <= end)]
   dl_flo = dl_flo[(dl_flo["TIMESTAMP"] >= start) & (dl_flo["TIMESTAMP"] <= end)]
+  dl_flo_hourly = dl_flo_hourly[(dl_flo_hourly["TIMESTAMP"] >= start) & (dl_flo_hourly["TIMESTAMP"] <= end)]
   dl_gen = dl_gen[(dl_gen["TIMESTAMP"] >= start) & (dl_gen["TIMESTAMP"] <= end)]
   user_irr = user_irr[(user_irr["date"] >= start) & (user_irr["date"] <= end)]
-  return et_both, dl_soil_all, dl_flo, dl_gen, user_irr
+  return et_both, dl_soil_all, dl_flo, dl_gen, user_irr, dl_flo_hourly
 
-et_both, dl_soil_all, dl_flo, dl_gen, user_irr = time_restrict()
+et_both, dl_soil_all, dl_flo, dl_gen, user_irr, dl_flo_hourly = time_restrict()
 
 ## Initialize data table tabs
 irr_tab, et_tab, soil_tab, wp_tab, weather_tab = st.tabs(["Irrigation", "Evapotranspiration", "Soil Moisture", "Water Potential", "Weather"])
 
-# irr_year = irr_tab.radio("Year:", years_active, horizontal = True)
-## Irrigation data editor/button initilization
-user_file = None
-user_irr["irr"] = user_irr["irr"].astype(float)
-user_irr["precip"] = user_irr["precip"].astype(float)
-app_df = irr_tab.data_editor(user_irr.rename(columns = {"date": "Date", "irr": "Irrigation (in)", "precip": "Precipitation (in)"}),
-                             column_config = {
-                               "Date": st.column_config.DateColumn(),
-                               "Irrigation (in)": st.column_config.NumberColumn(min_value = 0, max_value = 10, step = .001, format = "%.3f"),
-                               "Precipitation (in)": st.column_config.NumberColumn(min_value = 0, max_value = 10, step = .001, format = "%.3f")
-                             },
-                             hide_index = True,
-                             disabled = ["Date"])
-# popup = irr_tab.popover("Upload Data")
-# popup.download_button(label = "Download Template File (Selected Year)", data = template.to_csv().encode("utf-8"), file_name = f"csgrowers_irrigation_template.csv")
-# user_file = popup.file_uploader("Upload Data", type = "csv")
-
-## Only triggers if user uploads a csv
-## Runs a check on upload, uploads to Box if successful
-
-## Temporarily disabled
-
-# if user_file is not None:
-#   if st.session_state.get("last_uploaded_file") != user_file.name:
-#     user_df = pd.read_csv(user_file, index_col = [0])
-#     file_check, codes = user_upload_check(user_df)
-#     if file_check == True:
-#       irr_tab.success('File upload successful')
-#       supabase_upload(user_df)
-#     else:
-#       irr_tab.error("ERROR: " +  " ERROR: ".join(codes))   
-
-## Allows user to download and save current data frame, will only save if DF passes check.
-down_popup = irr_tab.popover("Download & Save")
-if down_popup.download_button("Download & Save", data = app_df.to_csv().encode('utf-8'), file_name = 'user_water_input.csv'):
-  checkdown, codes = user_upload_check(app_df)
-  if checkdown == True:
-    supabase_upload(app_df)
-    irr_tab.success('File save successful')
-  else:
-    irr_tab.error("ERROR: " +  " ERROR: ".join(codes) + " --- file did not save to cloud.")
-
-## Allows user to save current data frame, will only save if DF passes check.
-if down_popup.button("Save"):
-  checkdown, codes = user_upload_check(app_df)
-  if checkdown == True:
-    supabase_upload(app_df)
-    irr_tab.success('File save successful')
-  else:
-    irr_tab.error("ERROR: " +  " ERROR: ".join(codes) + " --- file did not save to cloud.")
-
-## Displays ET data
-et_both = et_both[["date", "eto", "eta", "etof"]]
-et_both["eto"] = et_both["eto"]*cc
-et_tab.dataframe(et_both.rename(columns = {"date": "Date", "eto": "ETc", "eta": "ETa", "etof": "FrET"}), hide_index = True,
-                 column_config={"Date": st.column_config.DateColumn()})
-
-## Rearrange and show soil data
-soil_cols = list(dl_soil_all.columns)
-soil_cols = soil_cols[-1::] + soil_cols[0:-1]
-dl_soil_all = dl_soil_all[soil_cols]
-soil_tab.dataframe(dl_soil_all.rename(columns = {"TIMESTAMP": "Date"}), hide_index = True,
-                 column_config={"Date": st.column_config.DateColumn()})
-
-## Water Potential Data Frame that uses earlier functions to check data upon save.
-app_wp = wp_tab.data_editor(dl_flo.rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP_mean", "WP_std", "WP_min", "WP_max"], hide_index = True,
-                 column_config={"Date": st.column_config.DateColumn(),
-                                "Precipitation (in)": st.column_config.NumberColumn(min_value = -20, max_value = 10, step = .001, format = "%.3f")})
-if wp_tab.button("Save Pressure Bomb Data"):
-  if pb_check(app_wp) == "Fail":
-    wp_tab.error("Upload Failed Check Inputs")
-  else:
-    pressure_bomb_upload(app_wp.rename(columns = {"Date": "TIMESTAMP"}))
-    wp_tab.success("Upload Successful!")
-
-## Weather data is rearranged and displayed
-dl_gen = dl_gen[["TIMESTAMP", "VPD", "Air_Temperature (C)", "Air_Temperature (F)", "Relative_Humidity (%)"]]
-weather_tab.dataframe(dl_gen.rename(columns = {"TIMESTAMP": "Date"}), hide_index = True,
-                 column_config={"Date": st.column_config.DateColumn()})
 
 bottom_margin = 0
 
 ## Irrigation Visualization
-def irr_vis(irr = app_df):
+def irr_vis(irr = user_irr):
   irr_plot = go.Figure()
 
-  irr_plot.add_trace(go.Bar(x = pd.to_datetime(irr["Date"]), y = irr["Irrigation (in)"], name = "Irrigation (in)", showlegend = True))
+  irr_plot.add_trace(go.Bar(x = pd.to_datetime(irr["date"]), y = irr["irr"], name = "Irrigation (in)", showlegend = True))
   irr_plot.update_layout(
     margin = dict(t = 0, b = bottom_margin, r = 150),
     yaxis_title = "Irrigation Applied (in)"
@@ -605,6 +553,12 @@ def water_potential(wp = dl_flo, dl_gen = dl_gen):
     margin = dict(t = 0, b = bottom_margin)
   )
 
+  wp_plot.update_layout(
+    yaxis_title = "Water Potential (Bar)",
+    hovermode = "x unified",
+    margin = dict(t = 0, b = bottom_margin)
+  )
+
   # wp_plot.update_xaxes(
   #   dtick = 7*24*60*60*1000,
   #   tickformat="%b\n%d\n%Y",
@@ -641,6 +595,316 @@ def weather_plot(dl_gen = dl_gen):
 
 weather_tab.subheader("Weather")
 weather_tab.plotly_chart(weather_plot())
+
+### Irrigation Upload Start
+UNIT_PATTERNS = {
+    "mm":        r"\bmm\b|millimeters?|millimetres?",
+    "cm":        r"\bcm\b|centimeters?|centimetres?",
+    "inches":    r"\bin\b|inch|inches",
+    "liters":    r"\bl\b|litres?|liters?",
+    "gallons":   r"\bgal\b|gallons?",
+    "m³":        r"\bm3\b|m³|cubic\s*meters?|cubic\s*metres?",
+    "ft³":       r"\bft3\b|ft³|cubic\s*feet|cubic\s*foot",
+    "acre-feet": r"acre[\s\-]feet|acre[\s\-]ft",
+}
+ 
+def detect_unit_from_text(text: str) -> str | None:
+    text = text.lower()
+    for unit, pattern in UNIT_PATTERNS.items():
+        if re.search(pattern, text, re.IGNORECASE):
+            return unit
+    return None
+ 
+def infer_unit(col_name: str, df: pd.DataFrame) -> str:
+    found = detect_unit_from_text(col_name)
+    if found:
+        return found
+    if df[col_name].dtype == object:
+        for val in df[col_name].dropna().astype(str).head(20):
+            found = detect_unit_from_text(val)
+            if found:
+                return found
+    try:
+        median = pd.to_numeric(df[col_name], errors="coerce").dropna().median()
+        if median < 5:    return "inches (estimated)"
+        if median < 50:   return "mm (estimated)"
+        if median < 500:  return "liters (estimated)"
+        return "gallons (estimated)"
+    except Exception:
+        return "unknown"
+
+ 
+DATE_KEYWORDS  = ["date", "day", "time", "timestamp", "dt", "fecha"]
+IRRIG_KEYWORDS = ["irrig", "water", "flow", "amount", "depth", "volume",
+                  "applied", "mm", "inch", "gallon", "litre", "liter"]
+ 
+def score_column(col: str, keywords: list[str]) -> int:
+    return sum(kw in col.lower() for kw in keywords)
+ 
+def find_best_column(cols: list[str], keywords: list[str]) -> str | None:
+    scores = {c: score_column(c, keywords) for c in cols}
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else None
+ 
+def auto_detect_columns(df: pd.DataFrame) -> tuple[str | None, str | None]:
+    date_col = next(
+        (c for c in df.columns if pd.api.types.is_datetime64_any_dtype(df[c])), None
+    ) or find_best_column(list(df.columns), DATE_KEYWORDS)
+ 
+    irrig_candidates = [c for c in df.columns if c != date_col]
+    irrig_col = find_best_column(irrig_candidates, IRRIG_KEYWORDS) or next(
+        (c for c in irrig_candidates if pd.api.types.is_numeric_dtype(df[c])), None
+    )
+    return date_col, irrig_col
+ 
+def read_raw_file(uploaded_file) -> pd.DataFrame | None:
+    name = uploaded_file.name.lower()
+    try:
+        if name.endswith(".csv"):
+            return pd.read_csv(uploaded_file, parse_dates=True)
+        elif name.endswith((".xlsx", ".xls")):
+            return pd.read_excel(uploaded_file, parse_dates=True)
+    except Exception as e:
+        st.error(f"Could not read file: {e}")
+    return None
+ 
+def _column_selector_form(
+    df_raw: pd.DataFrame,
+    suggested_date: str | None,
+    suggested_irrig: str | None,
+) -> tuple[str | None, str | None, str | None, bool]:
+    """
+    Renders a styled form card for column confirmation.
+    Returns (date_col, irrig_col, unit_override, confirmed).
+    confirmed=False means the user hasn't submitted yet.
+    """
+    cols = list(df_raw.columns)
+ 
+    # CSS to style the form like a modal card
+    st.markdown("""
+    <style>
+    div[data-testid="stForm"] {
+        border: border: 1px solid var(--border-color, rgba(128,128,128,0.3));
+        border-radius: 12px;
+        padding: 1.5rem 1.75rem;
+        background: var(--secondary-background-color);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        max-width: 100%;
+        margin: 1rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+ 
+    with st.form("column_selection_form", clear_on_submit=False):
+        st.markdown("### Confirm your columns")
+        st.caption("We've made our best guess below — adjust if anything looks off.")
+ 
+        with st.expander("Preview raw file (first 5 rows)", expanded=False):
+            st.dataframe(df_raw.head(), use_container_width=True)
+ 
+        st.divider()
+ 
+        date_idx  = cols.index(suggested_date)  if suggested_date  in cols else 0
+        irrig_idx = cols.index(suggested_irrig) if suggested_irrig in cols else (1 if len(cols) > 1 else 0)
+ 
+        chosen_date = st.selectbox(
+            "Date column",
+            options=cols,
+            index=date_idx,
+            help="Column containing the date or timestamp for each reading.",
+        )
+        chosen_irrig = st.selectbox(
+            "Irrigation column",
+            options=cols,
+            index=irrig_idx,
+            help="Column containing how much water was applied each day.",
+        )
+ 
+        unit_options = [
+            "auto-detect", "mm", "cm", "inches",
+            "liters", "gallons", "m³", "ft³", "acre-feet", "other",
+        ]
+        chosen_unit = st.selectbox(
+            "Units (optional override)",
+            options=unit_options,
+            index=0,
+            help="Leave on auto-detect unless you want to force a specific unit.",
+        )
+ 
+        submitted = st.form_submit_button("✅ Confirm & Load", use_container_width=True)
+ 
+    if submitted:
+        if chosen_date == chosen_irrig:
+            st.error("Date and irrigation columns must be different. Please adjust your selection.")
+            return None, None, None, False
+        unit_override = chosen_unit if chosen_unit not in ("auto-detect", "other") else None
+        return chosen_date, chosen_irrig, unit_override, True
+ 
+    return None, None, None, False
+ 
+def build_irrigation_df(
+    df_raw: pd.DataFrame,
+    date_col: str,
+    irrig_col: str,
+    unit_override: str | None = None,
+) -> tuple[pd.DataFrame | None, str]:
+ 
+    df = df_raw[[date_col, irrig_col]].copy()
+    df.columns = ["date", "irrigation"]
+ 
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    bad_dates  = df["date"].isna().sum()
+ 
+    df["irrigation"] = (
+        df["irrigation"].astype(str)
+        .str.extract(r"([\d.]+)", expand=False)
+        .astype(float)
+    )
+ 
+    df.dropna(subset=["date", "irrigation"], inplace=True)
+    df.sort_values("date", inplace=True)
+    df.reset_index(drop=True, inplace=True)
+ 
+    if df.empty:
+        return None, "No valid rows remain after cleaning. Check your date and value formats."
+ 
+    unit = unit_override if unit_override else infer_unit(irrig_col, df_raw)
+ 
+    df.attrs["unit"]               = unit
+    df.attrs["original_date_col"]  = date_col
+    df.attrs["original_irrig_col"] = irrig_col
+    df.attrs["skipped_rows"]       = bad_dates
+ 
+    msg = (
+        f"✅ Loaded **{len(df)} rows** — "
+        f"date: `{date_col}`, irrigation: `{irrig_col}`, units: **{unit}**"
+    )
+    if bad_dates:
+        msg += f"  ⚠️ {bad_dates} row(s) had unparseable dates and were dropped."
+    return df, msg
+ 
+def irrigation_uploader() -> pd.DataFrame | None:
+    """
+    Drop-in Streamlit component. Renders a file uploader, then a column-
+    selection form (styled as a modal card), and returns a clean DataFrame
+    with columns ['date', 'irrigation'] once the user confirms.
+ 
+    Usage:
+        df = irrigation_uploader()
+        if df is not None:
+            unit = df.attrs["unit"]
+            st.line_chart(df.set_index("date")["irrigation"])
+    """
+    st.subheader("Upload Irrigation Data")
+    st.caption("Accepted formats: CSV, Excel (.xlsx / .xls)")
+ 
+    uploaded = st.file_uploader(
+        "Choose a file",
+        type=["csv", "xlsx", "xls"],
+        help="File should contain at least one date column and one irrigation/water column.",
+    )
+ 
+    if uploaded is None:
+        st.info("Upload a CSV or Excel file to get started.")
+        return None
+ 
+    # Cache the raw parse in session_state so Streamlit re-runs don't re-read the file
+    file_key = f"_irrig_raw_{uploaded.name}_{uploaded.size}"
+    if file_key not in st.session_state:
+        df_raw = read_raw_file(uploaded)
+        if df_raw is None:
+            return None
+        st.session_state[file_key] = df_raw
+    df_raw = st.session_state[file_key]
+ 
+    # Auto-suggest columns, then let the user confirm
+    suggested_date, suggested_irrig = auto_detect_columns(df_raw)
+    date_col, irrig_col, unit_override, confirmed = _column_selector_form(
+        df_raw, suggested_date, suggested_irrig
+    )
+ 
+    if not confirmed:
+        return None
+ 
+    # Build and return the final DataFrame
+    df, message = build_irrigation_df(df_raw, date_col, irrig_col, unit_override)
+ 
+    if df is None:
+        st.error(message)
+        return None
+ 
+    st.success(message)
+    with st.expander("Preview cleaned data", expanded=True):
+        st.dataframe(df, use_container_width=True)
+ 
+    return df
+
+with irr_tab:
+  df = irrigation_uploader()
+
+## Irrigation data editor/button initilization
+if df is None:
+  user_file = None
+  user_irr["irr"] = user_irr["irr"].astype(float)
+  user_irr["precip"] = user_irr["precip"].astype(float)
+  try:
+    app_df = irr_tab.data_editor(user_irr.rename(columns = {"date": "Date", "irr": "Irrigation (in)", "precip": "Precipitation (in)"}).sort_values(by = "Date", ascending=False),
+                                          column_config = {
+                                          "Date": st.column_config.DateColumn(),
+                                          "Irrigation (in)": st.column_config.NumberColumn(min_value = 0, max_value = 10, step = .001, format = "%.3f"),
+                                          "Precipitation (in)": st.column_config.NumberColumn(min_value = 0, max_value = 10, step = .001, format = "%.3f")},
+                                          hide_index = True,
+                                          disabled = ["Date"])
+  except:
+     st.write("name fail")
+     app_df = irr_tab.data_editor(user_irr.rename(columns = {"date": "Date", "precip": "Precipitation (in)"}).sort_values(by = "Date", ascending=False),
+                                          column_config = {
+                                          "Date": st.column_config.DateColumn(),
+                                          "Irrigation (in)": st.column_config.NumberColumn(min_value = 0, max_value = 10, step = .001, format = "%.3f"),
+                                          "Precipitation (in)": st.column_config.NumberColumn(min_value = 0, max_value = 10, step = .001, format = "%.3f")},
+                                          hide_index = True,
+                                          disabled = ["Date"])
+  
+else:
+  time.sleep(3)
+  supabase_upload(df.merge(et_both[["date","pr"]], on = "date", how = "outer"))
+
+if irr_tab.button("Save"):
+  checkdown, codes = user_upload_check(app_df)
+  if checkdown == True:
+    supabase_upload(app_df)
+    irr_tab.success('File save successful')
+  else:
+    irr_tab.error("ERROR: " +  " ERROR: ".join(codes) + " --- file did not save to cloud.")
+
+## Displays ET data
+et_both = et_both[["date", "eto", "eta", "etof"]]
+et_both["eto"] = et_both["eto"]*cc
+et_tab.dataframe(et_both.iloc[::-1].rename(columns = {"date": "Date", "eto": "ETc", "eta": "ETa", "etof": "FrET"}), hide_index = True,
+                 column_config={"Date": st.column_config.DateColumn()})
+
+## Rearrange and show soil data
+soil_cols = list(dl_soil_all.columns)
+soil_cols = soil_cols[-1::] + soil_cols[0:-1]
+dl_soil_all = dl_soil_all[soil_cols]
+soil_tab.dataframe(dl_soil_all.iloc[::-1].rename(columns = {"TIMESTAMP": "Date"}), hide_index = True,
+                 column_config={"Date": st.column_config.DateColumn()})
+
+## Water Potential Data Frame that uses earlier functions to check data upon save.
+app_wp = wp_tab.data_editor(dl_flo.iloc[::-1].rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP_mean", "WP_std", "WP_min", "WP_max", "WP"], hide_index = True,
+                 column_config={"Date": st.column_config.DateColumn(),
+                                "Precipitation (in)": st.column_config.NumberColumn(min_value = -20, max_value = 10, step = .001, format = "%.3f")})
+if wp_tab.button("Save Pressure Bomb Data"):
+  if pb_check(app_wp) == "Fail":
+    wp_tab.error("Upload Failed Check Inputs")
+  else:
+    pressure_bomb_upload(app_wp.rename(columns = {"Date": "TIMESTAMP"}))
+    wp_tab.success("Upload Successful!")
+
+## Weather data is rearranged and displayed
+dl_gen = dl_gen[["TIMESTAMP", "VPD", "Air_Temperature (C)", "Air_Temperature (F)", "Relative_Humidity (%)"]]
+weather_tab.dataframe(dl_gen[::-1].rename(columns = {"TIMESTAMP": "Date"}), hide_index = True,
+                 column_config={"Date": st.column_config.DateColumn()})
 
 st.write("")
 st.write("")

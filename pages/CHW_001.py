@@ -17,12 +17,12 @@ import time
 ## Must be first line
 st.set_page_config(layout = "wide")
 warnings.filterwarnings("ignore")
-st.title("CSGrowers - Capay Independence")
+st.title("CSGrowers - Chowchilla")
 
 origin = "streamlit" ## streamlit or local
 
-site = "CAP_001"
-curr_page = "CAP_001"
+site = "CHW_001"
+curr_page = "CHW_001"
 
 years_active = ["2025", "2026"]
 
