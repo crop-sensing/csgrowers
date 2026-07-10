@@ -37,5 +37,5 @@ def get_authorized_pages():
 if origin == "streamlit":
   pg = st.navigation(get_authorized_pages(), position="sidebar", expanded=True)
 else:
-  pg = st.navigation([st.Page("pages/homepage.py"), st.Page("pages/CAP_test.py", title="CAP_Test"), st.Page("pages/CHW_001.py"), st.Page("pages/GLE_001.py"), st.Page("pages/BAR_002.py"), st.Page("pages/OAK_test.py")])
+  pg = st.navigation([st.Page("pages/homepage.py"), st.Page("pages/CAP_test.py", title="CAP_Test"), st.Page("pages/CHW_001.py"), st.Page("pages/GLE_001.py"), st.Page("pages/OAK_test.py")])
 pg.run()

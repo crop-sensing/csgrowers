@@ -1,5 +1,14 @@
 [
     {
+        "version": "1.2.0",
+        "date": "2026-07-10",
+        "changes": [
+            {"type": "feature", "text": "Added a feedback form to report bugs, request features, and to suggest improvements. The CSGrowers Team is notified when feedback is submitted."},
+            {"type": "improvement", "text": "Added clearer phrasing for ET summary box."},
+            {"type": "bug fix", "text": "Fixed visual bug where ETc would not update upon the changing of crop coefficient."}
+        ]
+    },
+    {
         "version": "1.1.0",
         "date": "2026-06-23",
         "changes": [

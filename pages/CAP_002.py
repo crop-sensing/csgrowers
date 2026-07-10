@@ -300,7 +300,7 @@ with col3.container(border = True, height = 290):
   eto = (et_last_week["eto"]/25.4)
   eto_sum = eto.sum()
   st.markdown(f"""
-              #### ETo (Last 7 Days): {eto_sum:.3f} in.
+              #### ETo Total (Last 7 Days): {eto_sum:.3f} in.
               """
               )
   
@@ -326,7 +326,7 @@ with col3.container(border = True, height = 290):
   eto_cc = eto*cc
   eto_cc = eto_cc.sum()
   st.markdown(f"""
-              #### ETc (Last 7 Days): **{eto_cc:.3f} in.**""")
+              #### ETc Total (Last 7 Days): **{eto_cc:.3f} in.**""")
 
 ## Static text display summary ET info
 with col2.container(border = True, height = 137):
@@ -475,7 +475,7 @@ irr_tab.plotly_chart(irr_vis())
 def et_vis(et = et_both):
   et_plot = make_subplots(specs=[[{"secondary_y": True}]])
   
-  et_plot.add_trace(go.Scatter(x = et["date"], y = et["eto"], name = "ETc via CIMIS"), secondary_y=False)
+  et_plot.add_trace(go.Scatter(x = et["date"], y = et["eto"]*cc, name = "ETc via CIMIS"), secondary_y=False)
   et_plot.add_trace(go.Scatter(x = et["date"], y = et["eta"], name = "ETa via OpenET"), secondary_y=False)
   et_plot.add_trace(go.Scatter(x = et["date"], y = et["etof"], name = "FrET via OpenET", mode = "markers"), secondary_y=True)
   et_plot.update_layout(
@@ -511,7 +511,7 @@ def heat_map(dl_soil_all = dl_soil_all, filter = heat_select, depths = depths):
       colorbar = dict(title = "Soil Water Content"),
       hoverongaps = False,
       zmin = 0,
-      zmax = 50
+      zmax = 30
   ))
   ## Adds black vertical lines for each depth.
   for i, col in enumerate(depth_cols):
@@ -891,7 +891,7 @@ soil_tab.dataframe(dl_soil_all.iloc[::-1].rename(columns = {"TIMESTAMP": "Date"}
                  column_config={"Date": st.column_config.DateColumn()})
 
 ## Water Potential Data Frame that uses earlier functions to check data upon save.
-app_wp = wp_tab.data_editor(dl_flo.iloc[::-1].rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP_mean", "WP_std", "WP_min", "WP_max", "WP"], hide_index = True,
+app_wp = wp_tab.data_editor(dl_flo_hourly.iloc[::-1].rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP_mean", "WP_std", "WP_min", "WP_max", "WP"], hide_index = True,
                  column_config={"Date": st.column_config.DateColumn(),
                                 "Precipitation (in)": st.column_config.NumberColumn(min_value = -20, max_value = 10, step = .001, format = "%.3f")})
 if wp_tab.button("Save Pressure Bomb Data"):
@@ -921,7 +921,7 @@ st.write("")
 st.write("")
 ## Tutorial/Credits/Glossary Set Up
 text_col1, text_col2, text_col3, text_col4, text_col5, text_col6, text_col7 = st.columns(7)
-info_col1, info_col2, info_col3, info_col4, info_col5, info_col6 = st.columns(6)
+info_col1, info_col2, info_col3, info_col4, info_col5, info_col6, info_col7 = st.columns(7)
 
 with open("tutorial.json", "r") as f:
     slide_content = json.load(f)
@@ -981,6 +981,53 @@ def show_glossary():
     st.write("**VPD**: Vapor Pressure Deficit, via SAWS Towers")
     st.write("**WP**: Water Potential, gathered via SAWS Towers")
 
+
+def send_bug_report_email(title, feedback, description, severity, reporter_email):
+    client.table("bug_report").upsert({
+      "title": title,
+      "feedback_type": feedback,
+      "description": description,
+      "severity": severity,
+      "return_email": reporter_email
+  }).execute()
+    return True
+
+@st.dialog("Feedback", width = "large")
+def bug_report_widget():
+  with st.form("bug_report_form", clear_on_submit=True):
+    title = st.text_input("Short Summary", max_chars=120)
+    feedback_type = st.selectbox(
+      "What type of feedback are you reporting?",
+      ["Bug", "Feature Request", "Improvement"]
+    )
+    description = st.text_area(
+      f"Description:", height=140
+    )
+    
+    severity = st.select_slider(
+      "Severity",
+      options=["N/A","Low", "Medium", "High", "Critical"],
+      value="N/A",
+    )
+    reporter_email = st.text_input(
+      "Your e-mail:"
+    )
+
+    submitted = st.form_submit_button("Submit bug report")
+
+    if submitted:
+      if not title.strip():
+          st.error("Please enter a short summary before submitting.")
+          return
+
+
+      with st.spinner("Sending report..."):
+          try:
+              send_bug_report_email(title, feedback_type, description, severity, reporter_email)
+              st.success("Form has been successfully submitted!")
+          except:
+              st.error("Form failed to submit.")
+
   ## Shows tutorial/credits on click
 
 if info_col3.button("Get Started", use_container_width=True):
@@ -989,3 +1036,5 @@ if info_col3.button("Get Started", use_container_width=True):
     tutorial_dialog()
 if info_col4.button("Glossary", use_container_width=True):
   show_glossary()
+if info_col5.button("Feedback", use_container_width=True):
+   bug_report_widget()
