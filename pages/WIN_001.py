@@ -782,17 +782,6 @@ def build_irrigation_df(
     return df, msg
  
 def irrigation_uploader() -> pd.DataFrame | None:
-    """
-    Drop-in Streamlit component. Renders a file uploader, then a column-
-    selection form (styled as a modal card), and returns a clean DataFrame
-    with columns ['date', 'irrigation'] once the user confirms.
- 
-    Usage:
-        df = irrigation_uploader()
-        if df is not None:
-            unit = df.attrs["unit"]
-            st.line_chart(df.set_index("date")["irrigation"])
-    """
     st.subheader("Upload Irrigation Data")
     st.caption("Accepted formats: CSV, Excel (.xlsx / .xls)")
  
@@ -889,7 +878,7 @@ soil_tab.dataframe(dl_soil_all.iloc[::-1].rename(columns = {"TIMESTAMP": "Date"}
                  column_config={"Date": st.column_config.DateColumn()})
 
 ## Water Potential Data Frame that uses earlier functions to check data upon save.
-app_wp = wp_tab.data_editor(dl_flo_hourly.iloc[::-1].rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP_mean", "WP_std", "WP_min", "WP_max", "WP"], hide_index = True,
+app_wp = wp_tab.data_editor(dl_flo.iloc[::-1].rename(columns = {"TIMESTAMP": "Date"}), disabled = ["Date", "WP_mean", "WP_std", "WP_min", "WP_max", "WP"], hide_index = True,
                  column_config={"Date": st.column_config.DateColumn(),
                                 "Precipitation (in)": st.column_config.NumberColumn(min_value = -20, max_value = 10, step = .001, format = "%.3f")})
 if wp_tab.button("Save Pressure Bomb Data"):
