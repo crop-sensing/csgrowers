@@ -36,7 +36,7 @@ with data_issues.container(border = True):
     st.write("**All Towers**: There is a data gap of of 1-2 weeks in early April 2026. This has produced some visual bugs in some graphs during this time. **[Issue Updated 6/23/2026]**")
 if email.endswith("@capayfarms.com") or any(email.endswith(domain) for domain in admin_emails):
   with data_issues.container(border = True):
-      st.write("**CAP_IND**: The tower in the independence blcok has been down since 6/28/2026. Our technicians are aware of the issue and are working on solving the issue. **[Issue Updated 7/10/2026]**")
+      st.write("**CAP_IND**: The tower in the independence block is back online as of 7/14/2026. There is a gap in our data from 6/28/26 - 7/13/2026. **[Issue Updated 7/22/2026]**")
   with data_issues.container(border = True):
       st.write("**CAP_IND**: New FLORAPULSE and Soil Sensors have been installed on 4/7/2026, data from these sensors before this date may not be accurate or complete. **[Issue Updated 4/9/2026]**")
   with data_issues.container(border = True):

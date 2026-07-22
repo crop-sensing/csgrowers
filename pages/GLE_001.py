@@ -93,7 +93,7 @@ def data_set_up():
 
     res = client.table("water_potential").select("data").eq("dataset_name", "wp").eq("site", site).eq("username", "ALL").execute()
     dl_flo = pd.read_json(StringIO(json.dumps(res.data[0]["data"])))
-    dl_flo["TIMESTAMP"] = pd.to_datetime(dl_gen["TIMESTAMP"], unit = "ms")
+    dl_flo["TIMESTAMP"] = pd.to_datetime(dl_flo["TIMESTAMP"], unit = "ms")
     
     try:
       res = client.table("water_potential").select("data").eq("dataset_name", "pb").eq("site", site).eq("username", email).execute()
@@ -511,7 +511,7 @@ def heat_map(dl_soil_all = dl_soil_all, filter = heat_select, depths = depths):
       colorbar = dict(title = "Soil Water Content"),
       hoverongaps = False,
       zmin = 0,
-      zmax = 30
+      zmax = 50
   ))
   ## Adds black vertical lines for each depth.
   for i, col in enumerate(depth_cols):
