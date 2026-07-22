@@ -152,8 +152,6 @@ def data_set_up():
 
 et_both, dl_gen, dl_soil_all, dl_flo, user_irr, template, depths, et_last_week, sql_crop_coeff, sql_soil_panel, default_val, dl_flo_hourly = data_set_up()
 
-st.write(dl_flo)
-
 ## Checks column names, time values, and amount of rows in a data frame.
 ## Returns specific error codes if user df fails test.
 def user_upload_check(df, cols = ["Date", "Irrigation (in)", "Precipitation (in)"]):
